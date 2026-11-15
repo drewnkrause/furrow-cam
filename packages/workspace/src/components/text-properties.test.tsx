@@ -53,7 +53,10 @@ let heldLayouts: (() => void)[] | null = null;
 
 /** Lets the held layouts land, and those they start, until none is left. */
 async function releaseLayouts() {
-  for (let i = 0; i < 20; i++) await act(async () => heldLayouts?.splice(0).forEach((f) => f()));
+  for (let i = 0; i < 20; i++)
+    await act(async () => {
+      for (const reply of heldLayouts?.splice(0) ?? []) reply();
+    });
   heldLayouts = null;
 }
 vi.stubGlobal("Worker", TextWorker);
@@ -182,7 +185,7 @@ describe("TextProperties", () => {
     [true, 1],
   ])(
     "keeps two quick gestures apart while layout is slow (Escape on the second: %s)",
-    async (escape, steps) => {
+    async (cancel, steps) => {
       render(<DrawingProperties drawingId={TEXT_ID} />, withText());
       heldLayouts = [];
       const height = screen.getByLabelText(/^Letter height/);
@@ -191,15 +194,15 @@ describe("TextProperties", () => {
       // The second starts before the first's layout lands.
       const lineSpacing = screen.getByLabelText(/^Line spacing/);
       fireEvent.keyDown(lineSpacing, { key: "ArrowUp" });
-      if (escape) fireEvent.keyDown(window, { key: "Escape" });
+      if (cancel) fireEvent.keyDown(window, { key: "Escape" });
       else fireEvent.keyUp(lineSpacing, { key: "ArrowUp" });
       await releaseLayouts();
       await waitFor(() => expect(stores.document.getState().inTransaction).toBe(false));
       const raised = withText().drawings.at(-1)?.text;
       expect(text()?.height).toBeGreaterThan(raised?.height ?? 0);
-      expect(text()?.lineSpacing === raised?.lineSpacing).toBe(escape);
+      expect(text()?.lineSpacing === raised?.lineSpacing).toBe(cancel);
       expect(stores.document.getState().past).toHaveLength(steps);
-      if (!escape) {
+      if (!cancel) {
         act(() => stores.document.getState().undo());
         expect(text()?.lineSpacing).toBe(raised?.lineSpacing);
         expect(text()?.height).toBeGreaterThan(raised?.height ?? 0);
