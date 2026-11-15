@@ -92,10 +92,11 @@ Statuses: `Proposed` · `Accepted` · `Rejected` · `Deprecated` · `Superseded 
 | [0075](0075-demo-videos-recorded-frame-by-frame.md) | Demo videos are recorded a frame at a time on a frozen page clock | Accepted |
 | [0076](0076-public-map-search-and-elevation-services.md) | Maps, place search and elevation come from public services the browser calls directly | Accepted |
 | [0077](0077-terrain-generated-as-stl.md) | Terrain is generated in the browser as an STL mesh and imported like one | Accepted |
-| [0078](0078-drawings-and-a-model-together.md) | A project holds drawings and one model together | Accepted |
+| [0078](0078-drawings-and-a-model-together.md) | A project holds drawings and one model together | Accepted; superseded in part by ADR-0085 |
 | [0079](0079-machine-snapshot-links-its-source.md) | A project's machine snapshot links to the library machine it came from | Accepted |
 | [0080](0080-objects-then-paths.md) | Objects are selected first, their paths inside them, with an Objects pane | Accepted; superseded in part by ADR-0083 |
 | [0081](0081-update-notice-opens-the-website.md) | The update notice opens the website's download section | Accepted |
 | [0082](0082-mcp-terrain-fetches-elevation.md) | The MCP server makes terrain, fetching only elevation tiles while its tool runs | Accepted |
 | [0083](0083-operations-and-objects-share-a-tab.md) | Operations and objects share a sidebar tab, one above the other | Accepted |
 | [0084](0084-vcarve-inlays-start-depth.md) | V-carve inlays come from a start depth and a boundary path among the targets | Accepted |
+| [0085](0085-several-models.md) | A project holds several models, each machined on its own | Accepted |
