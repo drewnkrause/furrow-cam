@@ -52,7 +52,6 @@ import {
   useDocumentStoreApi,
   useWorkspaceStoreApi,
 } from "../providers/workspace-stores";
-import { canImportModel } from "../stores/geometry-actions";
 import { RibbonButton } from "./ribbon";
 import { TerrainSearch } from "./terrain-search";
 
@@ -125,7 +124,6 @@ function TerrainDialog({ onClose }: { onClose: () => void }) {
   const workspace = useWorkspaceStoreApi();
   const stock = useDocumentStore((s) => s.document.stock);
   const storable = host.limits.meshes;
-  const hasModel = useDocumentStore((s) => !canImportModel(s.document));
   // A download stores nothing, so without the server's limits it takes the default ones.
   const limits = storable ?? DEFAULT_STL_LIMITS;
   const units = useDocumentStore((s) => s.document.units);
@@ -362,7 +360,7 @@ function TerrainDialog({ onClose }: { onClose: () => void }) {
                 min={1}
                 // A model added is placed at this size, so no larger than the stock less its
                 // border; one that can only be downloaded has nothing to do with the stock.
-                max={plan && storable && !hasModel ? fittingSide(stock, plan.span) : undefined}
+                max={plan && storable ? fittingSide(stock, plan.span) : undefined}
                 value={longestSide}
                 disabled={generating}
                 onValueChange={setSide}
@@ -399,9 +397,7 @@ function TerrainDialog({ onClose }: { onClose: () => void }) {
                 )}
                 {stale && <p>{t("previewLoading")}</p>}
               </div>
-              {(!storable || hasModel) && (
-                <p className="text-muted-foreground">{storable ? t("hasModel") : t("storeOff")}</p>
-              )}
+              {!storable && <p className="text-muted-foreground">{t("storeOff")}</p>}
               {error && (
                 <p className="text-destructive" role="alert">
                   {format(error)}
@@ -461,7 +457,7 @@ function TerrainDialog({ onClose }: { onClose: () => void }) {
                 {t("download")}
               </Button>
               <Button
-                disabled={!plan || generating || !storable || hasModel}
+                disabled={!plan || generating || !storable}
                 data-demo="terrain-generate"
                 onClick={() => void generate()}
               >

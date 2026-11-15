@@ -8,12 +8,10 @@ import { useTranslations } from "use-intl";
 import { importModel } from "../lib/model-import";
 import { useWorkspaceHost } from "../providers/workspace-host";
 import {
-  useDocumentStore,
   useDocumentStoreApi,
   useWorkspaceStore,
   useWorkspaceStoreApi,
 } from "../providers/workspace-stores";
-import { canImportModel, ONE_MODEL } from "../stores/geometry-actions";
 import { RibbonButton } from "./ribbon";
 
 /** Why STL import is off: the server has no storage for meshes (ADR-0029). */
@@ -22,7 +20,7 @@ export const STL_IMPORT_OFF: Message = { code: "workspace.stlImportOff" };
 /**
  * The ribbon's button picking an STL or STEP file and importing it as a model
  * (PRD-0005 S1). Disabled while a file imports and, saying why, when the
- * server can't store meshes or the project already has its one model (ADR-0078).
+ * server can't store meshes.
  */
 export function ModelImportButton() {
   const t = useTranslations("Import");
@@ -35,7 +33,6 @@ export function ModelImportButton() {
   const importing = useWorkspaceStore(
     (s) => s.modelImport !== null && s.modelImport.error === null,
   );
-  const allowed = useDocumentStore((s) => canImportModel(s.document));
   const input = useRef<HTMLInputElement>(null);
 
   function onChange(event: ChangeEvent<HTMLInputElement>) {
@@ -67,7 +64,7 @@ export function ModelImportButton() {
         aria-label={ribbon("importModel")}
         data-demo="ribbon-import-model"
         hint={t("importModel")}
-        disabledReason={!limits ? format(STL_IMPORT_OFF) : allowed ? undefined : format(ONE_MODEL)}
+        disabledReason={limits ? undefined : format(STL_IMPORT_OFF)}
         disabled={importing}
         onClick={() => input.current?.click()}
       />

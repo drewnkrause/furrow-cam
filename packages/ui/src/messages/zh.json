@@ -724,7 +724,8 @@
       "noHoles": "没有可钻的内容:在视图中放置孔或使用所选形状。",
       "cutsPins": "此操作会切到定位销所在的位置，毛坯翻面后刀具会撞到定位销：请移动定位销或切削。",
       "noHoldingTabs": "没有保留桥：底面绕工件一圈切完后，工件会松脱。",
-      "stockBoundaryTwoSided": "两面都加工整个毛坯，将不会留下支撑工件的边框：请使用边距。"
+      "stockBoundaryTwoSided": "两面都加工整个毛坯，将不会留下支撑工件的边框：请使用边距。",
+      "reachesOtherModel": "刀具会切入另一个模型，而此操作不会沿该模型加工：只加工其自身的模型。请使用更小的边界，或将模型分开。"
     },
     "export": {
       "allHidden": "每个启用的操作都会切削隐藏的内容：请显示后再导出。",
@@ -796,7 +797,6 @@
       "unreadableFile": "无法读取此文件。",
       "modelUnreadable": "无法读取模型。",
       "importFailed": "无法导入此文件。",
-      "oneModel": "一个项目只能包含一个3D模型。",
       "noShapes": "此文件中没有可导入的形状。",
       "stlImportOff": "此服务器不支持导入3D模型。",
       "stepUnreadable": "无法读取此STEP文件。请从CAD软件重新导出后再试。",
@@ -1556,7 +1556,6 @@
     "next": "下一步",
     "back": "上一步",
     "download": "下载 STL",
-    "hasModel": "此项目已有 3D 模型：地形只能下载为 STL 文件。",
     "storeOff": "此服务器无法保存 3D 模型：地形只能下载为 STL 文件。",
     "cancel": "取消",
     "defaultName": "地形"
@@ -1583,7 +1582,6 @@
     "saving": "正在将模型添加到项目…",
     "generate": "添加到项目",
     "download": "下载 STL",
-    "hasModel": "此项目已有 3D 模型：浮雕只能下载为 STL 文件。",
     "storeOff": "此服务器无法存储 3D 模型：浮雕只能下载为 STL 文件。",
     "cancel": "取消",
     "defaultName": "浮雕"

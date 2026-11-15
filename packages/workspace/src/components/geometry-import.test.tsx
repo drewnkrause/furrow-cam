@@ -77,16 +77,16 @@ describe("ModelImportButton in the ribbon", () => {
     click.mockRestore();
   });
 
-  it("is disabled once the project has its one model", () => {
+  it("imports another model into a project that has one (#596)", () => {
     const click = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => {});
     renderWorkspace(
       <ModelImportButton />,
       createMemoryHost({ document: { ...createProjectDocument(), models: [model] } }, { limits }),
     );
     const button = screen.getByRole("button", { name: "Import a model" });
-    expect(button.getAttribute("aria-disabled")).toBe("true");
+    expect(button.getAttribute("aria-disabled")).not.toBe("true");
     fireEvent.click(button);
-    expect(click).not.toHaveBeenCalled();
+    expect(click).toHaveBeenCalled();
     click.mockRestore();
   });
 });
