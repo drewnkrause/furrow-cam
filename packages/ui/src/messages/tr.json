@@ -689,6 +689,7 @@
       "skippedOpenPocket": "{count, plural, one {# açık yol} other {# açık yol}} atlandı: cepler kapalı yollar gerektirir.",
       "skippedOpenVCarve": "{count, plural, one {# açık yol} other {# açık yol}} atlandı: V oyma kapalı yollar gerektirir.",
       "skippedSmallCircles": "Takımdan küçük {count, plural, one {# çember} other {# çember}} atlandı.",
+      "skippedSmallPaths": "Takım için çok küçük olan {count, plural, other {# kapalı yol}} atlandı.",
       "skippedLargeCircles": "Matkaptan büyük {count, plural, one {# çember} other {# çember}} atlandı: bunları parmak frezeyle genişletin.",
       "skippedNonCircles": "{count, plural, one {# yol} other {# yol}} atlandı: delme için çember veya nokta gerekir.",
       "depthExceedsFlutes": "Derinlik, takımın kesme boyunu aşıyor.",

@@ -689,6 +689,7 @@
       "skippedOpenPocket": "Skipped {count, plural, one {# open path} other {# open paths}}: pockets need closed paths.",
       "skippedOpenVCarve": "Skipped {count, plural, one {# open path} other {# open paths}}: V-carving needs closed paths.",
       "skippedSmallCircles": "Skipped {count, plural, one {# circle} other {# circles}} smaller than the tool.",
+      "skippedSmallPaths": "Skipped {count, plural, one {# closed path} other {# closed paths}} too small for the tool.",
       "skippedLargeCircles": "Skipped {count, plural, one {# circle} other {# circles}} larger than the drill: bore them with an end mill.",
       "skippedNonCircles": "Skipped {count, plural, one {# path} other {# paths}}: drilling needs circles or points.",
       "depthExceedsFlutes": "The depth exceeds the tool's flute length.",

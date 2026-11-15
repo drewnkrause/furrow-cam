@@ -689,6 +689,7 @@
       "skippedOpenPocket": "{count, plural, one {# caminho aberto ignorado} other {# caminhos abertos ignorados}}: rebaixos precisam de caminhos fechados.",
       "skippedOpenVCarve": "{count, plural, one {# caminho aberto ignorado} other {# caminhos abertos ignorados}}: o entalhe em V precisa de caminhos fechados.",
       "skippedSmallCircles": "{count, plural, one {# círculo menor que a ferramenta ignorado} other {# círculos menores que a ferramenta ignorados}}.",
+      "skippedSmallPaths": "{count, plural, one {Ignorado # caminho fechado pequeno demais} other {Ignorados # caminhos fechados pequenos demais}} para a ferramenta.",
       "skippedLargeCircles": "{count, plural, one {# círculo maior que a broca ignorado} other {# círculos maiores que a broca ignorados}}: usine-os com uma fresa de topo.",
       "skippedNonCircles": "{count, plural, one {# caminho ignorado} other {# caminhos ignorados}}: a furação precisa de círculos ou pontos.",
       "depthExceedsFlutes": "A profundidade excede o comprimento de corte da ferramenta.",

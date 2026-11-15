@@ -689,6 +689,7 @@
       "skippedOpenPocket": "{count, plural, one {# tracé ouvert ignoré} other {# tracés ouverts ignorés}} : les poches demandent des tracés fermés.",
       "skippedOpenVCarve": "{count, plural, one {# tracé ouvert ignoré} other {# tracés ouverts ignorés}} : la gravure en V demande des tracés fermés.",
       "skippedSmallCircles": "{count, plural, one {# cercle plus petit} other {# cercles plus petits}} que l'outil {count, plural, one {ignoré} other {ignorés}}.",
+      "skippedSmallPaths": "{count, plural, one {# tracé fermé ignoré, trop petit} other {# tracés fermés ignorés, trop petits}} pour l'outil.",
       "skippedLargeCircles": "{count, plural, one {# cercle plus grand} other {# cercles plus grands}} que le foret {count, plural, one {ignoré} other {ignorés}} : alésez-les avec une fraise droite.",
       "skippedNonCircles": "{count, plural, one {# tracé ignoré} other {# tracés ignorés}} : le perçage demande des cercles ou des points.",
       "depthExceedsFlutes": "La profondeur dépasse la longueur de coupe de l'outil.",
