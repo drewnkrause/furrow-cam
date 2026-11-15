@@ -1,6 +1,6 @@
 # PRD-0005: STL relief machining
 
-- **Status:** Draft
+- **Status:** Partially shipped (open: S9, corner clean-up; S11, rest machining for 2D pockets)
 - **Author:** Federico Vezzoli
 - **Created:** 2026-10-15
 - **Related:** PRD-0001, PRD-0003, ADR-0003, ADR-0004, ADR-0016, ADR-0019, ADR-0029, ADR-0030, ADR-0072
