@@ -5,8 +5,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   existingRecent,
   fileStamp,
+  isRecoveryInput,
   MAX_RECENT,
   parseRecent,
+  pathGrants,
   projectName,
   projectPathsIn,
   recoveryStore,
@@ -146,5 +148,28 @@ describe("watchFile", () => {
     } finally {
       stop();
     }
+  });
+});
+
+describe("pathGrants", () => {
+  it("allows only granted paths whose name matches", () => {
+    const grants = pathGrants();
+    grants.grant("/a/Coasters.furrow", null);
+    expect(grants.allows("/a/Coasters.furrow", /\.furrow$/i)).toBe(true);
+    expect(grants.allows("/a/Other.furrow", /\.furrow$/i)).toBe(false);
+    expect(grants.allows("/a/../a/Coasters.furrow", /\.furrow$/i)).toBe(false);
+    expect(grants.allows(undefined, /\.furrow$/i)).toBe(false);
+    grants.grant("/home/me/.bashrc");
+    expect(grants.allows("/home/me/.bashrc", /\.furrow$/i)).toBe(false);
+  });
+});
+
+describe("isRecoveryInput", () => {
+  it("accepts what the renderer sends and refuses anything else", () => {
+    expect(isRecoveryInput({ id: "a", path: null, name: "A" })).toBe(true);
+    expect(isRecoveryInput({ id: "a", path: "/a.furrow", name: "A", stamp: "1:2:3:4" })).toBe(true);
+    expect(isRecoveryInput({ id: "a", path: 1, name: "A" })).toBe(false);
+    expect(isRecoveryInput({ id: "a", path: null, name: "A", stamp: 5 })).toBe(false);
+    expect(isRecoveryInput(null)).toBe(false);
   });
 });
