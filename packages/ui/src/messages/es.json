@@ -689,6 +689,7 @@
       "skippedOpenPocket": "{count, plural, one {Se ha omitido # trazado abierto} other {Se han omitido # trazados abiertos}}: los vaciados necesitan trazados cerrados.",
       "skippedOpenVCarve": "{count, plural, one {Se ha omitido # trazado abierto} other {Se han omitido # trazados abiertos}}: el tallado en V necesita trazados cerrados.",
       "skippedSmallCircles": "{count, plural, one {Se ha omitido # círculo más pequeño} other {Se han omitido # círculos más pequeños}} que la herramienta.",
+      "skippedSmallPaths": "Se {count, plural, one {omitió # trayecto cerrado demasiado pequeño} other {omitieron # trayectos cerrados demasiado pequeños}} para la herramienta.",
       "skippedLargeCircles": "{count, plural, one {Se ha omitido # círculo más grande} other {Se han omitido # círculos más grandes}} que la broca: mandrínalos con una fresa plana.",
       "skippedNonCircles": "{count, plural, one {Se ha omitido # trazado} other {Se han omitido # trazados}}: el taladrado necesita círculos o puntos.",
       "depthExceedsFlutes": "La profundidad supera la longitud de corte de la herramienta.",

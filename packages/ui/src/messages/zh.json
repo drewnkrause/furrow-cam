@@ -689,6 +689,7 @@
       "skippedOpenPocket": "已跳过{count, plural, other {#条开放路径}}：挖槽需要闭合路径。",
       "skippedOpenVCarve": "已跳过{count, plural, other {#条开放路径}}：V形雕刻需要闭合路径。",
       "skippedSmallCircles": "已跳过{count, plural, other {#个}}比刀具小的圆。",
+      "skippedSmallPaths": "已跳过 {count, plural, other {# 条}}对刀具来说太小的闭合路径。",
       "skippedLargeCircles": "已跳过{count, plural, other {#个}}比钻头大的圆：请用立铣刀铣孔。",
       "skippedNonCircles": "已跳过{count, plural, other {#条路径}}：钻孔需要圆或点。",
       "depthExceedsFlutes": "深度超过了刀具的刃长。",

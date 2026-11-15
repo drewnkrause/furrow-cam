@@ -689,6 +689,7 @@
       "skippedOpenPocket": "{count, plural, one {# offener Pfad übersprungen} other {# offene Pfade übersprungen}}: Taschen brauchen geschlossene Pfade.",
       "skippedOpenVCarve": "{count, plural, one {# offener Pfad übersprungen} other {# offene Pfade übersprungen}}: V-Schnitzen braucht geschlossene Pfade.",
       "skippedSmallCircles": "{count, plural, one {# Kreis übersprungen, der} other {# Kreise übersprungen, die}} kleiner als das Werkzeug {count, plural, one {ist} other {sind}}.",
+      "skippedSmallPaths": "{count, plural, one {# geschlossener Pfad} other {# geschlossene Pfade}} übersprungen, zu klein für das Werkzeug.",
       "skippedLargeCircles": "{count, plural, one {# Kreis übersprungen, der} other {# Kreise übersprungen, die}} größer als der Bohrer {count, plural, one {ist} other {sind}}: Bohre sie mit einem Schaftfräser aus.",
       "skippedNonCircles": "{count, plural, one {# Pfad übersprungen} other {# Pfade übersprungen}}: Bohren braucht Kreise oder Punkte.",
       "depthExceedsFlutes": "Die Tiefe überschreitet die Schneidenlänge des Werkzeugs.",

@@ -689,6 +689,7 @@
       "skippedOpenPocket": "{count, plural, other {#本の開いたパス}}をスキップしました。ポケットには閉じたパスが必要です。",
       "skippedOpenVCarve": "{count, plural, other {#本の開いたパス}}をスキップしました。V カービングには閉じたパスが必要です。",
       "skippedSmallCircles": "工具より小さい{count, plural, other {#個の円}}をスキップしました。",
+      "skippedSmallPaths": "工具に対して小さすぎる閉じたパスを{count, plural, other {#本}}スキップしました。",
       "skippedLargeCircles": "ドリルより大きい{count, plural, other {#個の円}}をスキップしました。エンドミルでボーリングしてください。",
       "skippedNonCircles": "{count, plural, other {#本のパス}}をスキップしました。穴あけには円または点が必要です。",
       "depthExceedsFlutes": "深さが工具の刃長を超えています。",
