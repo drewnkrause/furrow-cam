@@ -47,6 +47,7 @@ import {
 import {
   existingRecent,
   fileStamp,
+  isPageOf,
   isRecoveryInput,
   parseRecent,
   pathGrants,
@@ -999,7 +1000,7 @@ async function addRecent(path: string) {
 /** Whether `event` came from the window's own page, not a frame or page loaded into it. */
 function fromRenderer(event: IpcMainEvent | IpcMainInvokeEvent) {
   const frame = event.senderFrame;
-  return frame?.parent === null && frame.url.startsWith(`${RENDERER_ORIGIN}/`);
+  return frame?.parent === null && isPageOf(frame.url, RENDERER_ORIGIN);
 }
 
 /** `ipcMain.handle`, refusing calls from anywhere but the window's own page. */

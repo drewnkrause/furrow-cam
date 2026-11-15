@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   existingRecent,
   fileStamp,
+  isPageOf,
   isRecoveryInput,
   MAX_RECENT,
   parseRecent,
@@ -171,5 +172,15 @@ describe("isRecoveryInput", () => {
     expect(isRecoveryInput({ id: "a", path: 1, name: "A" })).toBe(false);
     expect(isRecoveryInput({ id: "a", path: null, name: "A", stamp: 5 })).toBe(false);
     expect(isRecoveryInput(null)).toBe(false);
+  });
+});
+
+describe("isPageOf", () => {
+  it("matches the origin's pages and nothing that only starts like it", () => {
+    expect(isPageOf("app://furrow/index.html", "app://furrow")).toBe(true);
+    expect(isPageOf("app://furrow.evil/index.html", "app://furrow")).toBe(false);
+    expect(isPageOf("app://furrow", "app://furrow")).toBe(false);
+    expect(isPageOf("http://localhost:5173/", "http://localhost:5173")).toBe(true);
+    expect(isPageOf("http://localhost:51730/", "http://localhost:5173")).toBe(false);
   });
 });

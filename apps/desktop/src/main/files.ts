@@ -201,6 +201,11 @@ export function isRecoveryInput(value: unknown): value is Omit<Recovery, "savedA
   );
 }
 
+/** Whether `url` is a page of `origin`: `app://furrow` is not `app://furrow.evil`. */
+export function isPageOf(url: string, origin: string): boolean {
+  return url.startsWith(`${origin}/`);
+}
+
 /**
  * The files the user chose this session: in a dialog, by double-click or on
  * the command line, or listed as recent or recovered. The only paths the
