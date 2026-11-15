@@ -1498,7 +1498,6 @@
       "mm": "Milímetros",
       "in": "Polegadas"
     },
-    "start": "Importe um desenho SVG ou DXF, ou um modelo STL ou STEP, para começar.",
     "importDrawing": "Importar SVG/DXF…",
     "importModel": "Importar STL ou STEP…",
     "dpi": "DPI",
@@ -1515,7 +1514,6 @@
     "defaultText": "Texto"
   },
   "Terrain": {
-    "open": "Terreno a partir de um mapa…",
     "ribbon": "Terreno",
     "hint": "Criar um modelo em relevo de uma área num mapa",
     "title": "Terreno a partir de um mapa",
@@ -1564,7 +1562,6 @@
     "defaultName": "Terreno"
   },
   "ImageRelief": {
-    "open": "Relevo a partir de uma imagem…",
     "ribbon": "Imagem",
     "hint": "Criar um modelo em relevo a partir de uma imagem em tons de cinzento",
     "title": "Relevo a partir de uma imagem",
