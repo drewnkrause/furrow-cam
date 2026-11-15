@@ -1,7 +1,7 @@
 import { distance, type LinearAngle, type Point } from "@furrow/document";
 import { projectOnLoop } from "../../geometry/loop";
 import type { Vec3 } from "../../scene/stock";
-import { Track } from "../passes";
+import { bounds, distanceToSegment, inBox, Track } from "../passes";
 import {
   type Cut,
   cutRing,
@@ -27,9 +27,13 @@ export type LinearPlan = {
   kind: "linear";
   /** The passes on each line, lines one step-over apart. */
   lines: Pass[][];
-  /** Position across the passes, in millimetres. */
+  /** Position along and across the passes, in millimetres. */
+  along: (point: Point) => number;
   across: (point: Point) => number;
+  stepOver: number;
   tolerance: number;
+  /** What each pass cuts wider than the step-over beside the laps alone (`exposedPoints`). */
+  exposed: Map<Pass, number[]>;
 };
 
 /**
@@ -79,7 +83,8 @@ export function linearPlan(piece: Piece, angle: LinearAngle, layout: Layout): Li
     }
     lines.push(passes);
   }
-  return { kind: "linear", lines, across, tolerance };
+  const exposed = exposedPoints(lines, piece.rings, along, stepOver + tolerance);
+  return { kind: "linear", lines, along, across, stepOver, tolerance, exposed };
 }
 
 /**
@@ -87,7 +92,8 @@ export function linearPlan(piece: Piece, angle: LinearAngle, layout: Layout): Li
  * offset ring, then the passes, each from lap to lap so the tool enters them
  * at depth. A pass is linked to the next on a neighbouring line along the
  * lap when the link stays between the two lines, within one step-over, which
- * makes the passes zig-zag. Otherwise the tool goes to the nearest pass left:
+ * makes the passes zig-zag. Otherwise the tool goes to the nearest pass left
+ * (of those beside what is cut, so none cuts wider than the step-over, #604):
  * along the lap it is on, which this level has cut, when the pass starts on
  * it; or through the cleared depth, or over the top, and straight down onto
  * the cleared lap.
@@ -104,13 +110,21 @@ export function cutLinear(
     cutRing(cut, ring, piece, container, z, clearedZ);
   }
   const left = new Set(plan.lines.flat());
+  // Struck off as the passes beside them are cut.
+  const exposed = new Map(plan.exposed);
   let onLap = lapAt(piece.rings, cut.builder.position);
   let line: number | null = null;
   let sweep = 1;
   while (left.size > 0) {
+    const beside = new Set([...left].filter((pass) => exposed.get(pass)?.length === 0));
+    // A point no pass on the line below covers has the edge, and so a lap,
+    // within the step-over of it, so from the bottom line up a pass is always
+    // beside; all of them only if rounding says otherwise.
+    const candidates = beside.size > 0 ? beside : left;
     const linked: Next | null =
-      onLap && line !== null ? link(plan, piece.rings, left, onLap, line, sweep) : null;
-    const next: Next = linked || nearestPass(cut, piece.rings, left, onLap, container, clearedZ);
+      onLap && line !== null ? link(plan, piece.rings, candidates, onLap, line, sweep) : null;
+    const next: Next =
+      linked || nearestPass(cut, piece.rings, candidates, onLap, container, clearedZ);
     const { pass, start, path } = next;
     if (linked && line !== null) sweep = Math.sign(pass.line - line);
     if (path) {
@@ -123,10 +137,58 @@ export function cutLinear(
     const end = pass.ends[0] === start ? pass.ends[1] : pass.ends[0];
     feedAlong(cut, [end.point], z);
     left.delete(pass);
+    const [lo, hi] = span(plan, pass);
+    for (const other of [pass.line - 1, pass.line + 1].flatMap((l) => plan.lines[l] ?? [])) {
+      // A point beside the pass is the step-over across from it.
+      const points = exposed.get(other)?.filter((at) => at < lo || at > hi);
+      if (points) exposed.set(other, points);
+    }
     onLap = end;
     line = pass.line;
   }
 }
+
+/** Where `pass` runs along its line, from lowest to highest, widened by the tolerance. */
+function span(plan: LinearPlan, { ends: [a, b] }: Pass): [number, number] {
+  const ends = [plan.along(a.point), plan.along(b.point)];
+  return [Math.min(...ends) - plan.tolerance, Math.max(...ends) + plan.tolerance];
+}
+
+/**
+ * The points every `SAMPLE` along each pass further than `reach` from all of
+ * `rings`, the laps, as positions along its line: what the pass would cut
+ * wider than the step-over until a pass next to it is cut.
+ */
+function exposedPoints(
+  lines: Pass[][],
+  rings: Ring[],
+  along: (point: Point) => number,
+  reach: number,
+): Map<Pass, number[]> {
+  const laps = rings.map(({ loop }) => ({ loop, box: bounds(loop) }));
+  const nearLap = (point: Point) =>
+    laps.some(
+      ({ loop, box }) =>
+        inBox(point, box, reach) &&
+        loop.some((b, i) => i > 0 && distanceToSegment(point, loop[i - 1] as Point, b) <= reach),
+    );
+  const exposed = new Map<Pass, number[]>();
+  for (const pass of lines.flat()) {
+    const [a, b] = pass.ends.map(({ point }) => point) as [Point, Point];
+    const count = Math.ceil(distance(a, b) / SAMPLE);
+    const points: number[] = [];
+    for (let k = 1; k < count; k++) {
+      const t = k / count;
+      const point: Point = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      if (!nearLap(point)) points.push(along(point));
+    }
+    exposed.set(pass, points);
+  }
+  return exposed;
+}
+
+/** How far apart `exposedPoints` samples a pass, in millimetres. */
+const SAMPLE = 0.25;
 
 /** Where on `rings` the tool at `here` is, if on one. */
 function lapAt(rings: Ring[], here: Vec3 | null): End | null {
