@@ -126,8 +126,8 @@ export function AddTextButton({ inCard = false }: { inCard?: boolean }) {
 /**
  * Imports SVG and DXF files and STL or STEP models, over the viewport: a card in its
  * centre while the project is empty; then the ribbon's `ImportDrawingButton`
- * adds a drawing per file and its `ModelImportButton` the one model a project
- * holds beside them (ADR-0078). Prompts, import warnings (until
+ * adds a drawing per file and its `ModelImportButton` a model per file
+ * (ADR-0085). Prompts, import warnings (until
  * dismissed) and how a model import is going show in the viewport's corner.
  */
 export function GeometryImport() {

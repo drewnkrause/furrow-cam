@@ -101,15 +101,23 @@ describe("TerrainDialog", () => {
     expect(host.stored.document().models).toEqual([]);
   });
 
-  it("only downloads in a project that has its model", async () => {
+  it("adds to a project that has a model already (#596)", async () => {
     await openWithArea(
       createMemoryHost(
         { document: { ...createProjectDocument(), models: [model] } },
         { limits: { meshes: DEFAULT_STL_LIMITS, fonts: null } },
       ),
     );
+    expect(screen.getByRole("button", { name: "Add to project" })).toHaveProperty(
+      "disabled",
+      false,
+    );
+  });
+
+  it("only downloads where the server can't store meshes", async () => {
+    await openWithArea();
     expect(screen.getByRole("button", { name: "Add to project" })).toHaveProperty("disabled", true);
-    expect(screen.getByText(/has its 3D model already/)).toBeTruthy();
+    expect(screen.getByText(/can't store 3D models/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Download STL" })).toHaveProperty("disabled", false);
     // A download isn't held to the stock: a side twice the stock's width is taken.
     const side = screen.getByLabelText(/Longest side/);
@@ -119,13 +127,6 @@ describe("TerrainDialog", () => {
     finish();
     await waitFor(() => expect(download).toHaveBeenCalledTimes(1));
     expect(generate.mock.lastCall?.[1]).toMatchObject({ longestSide: 1200 });
-  });
-
-  it("only downloads where the server can't store meshes", async () => {
-    await openWithArea();
-    expect(screen.getByRole("button", { name: "Add to project" })).toHaveProperty("disabled", true);
-    expect(screen.getByText(/can't store 3D models/)).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Download STL" })).toHaveProperty("disabled", false);
   });
 
   it("adds the terrain where it can be stored", async () => {
