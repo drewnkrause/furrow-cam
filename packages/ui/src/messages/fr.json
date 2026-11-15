@@ -483,6 +483,8 @@
       "keep": "Garder les miennes",
       "changed": "{name} a changé depuis son ouverture",
       "changedDetail": "Un autre programme, comme un assistant IA passant par le serveur MCP de Furrow CAM, l’a enregistré entre-temps. Le remplacer fait perdre ces modifications ; Enregistrer sous garde les deux.",
+      "exists": "{name} existe déjà",
+      "existsDetail": "Le remplacer fait perdre son contenu actuel ; Enregistrer sous conserve les deux.",
       "replace": "Remplacer",
       "saveAs": "Enregistrer sous…",
       "cancel": "Annuler"

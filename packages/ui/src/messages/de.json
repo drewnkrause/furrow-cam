@@ -483,6 +483,8 @@
       "keep": "Meine behalten",
       "changed": "{name} wurde seit dem Öffnen geändert",
       "changedDetail": "Ein anderes Programm, etwa ein KI-Assistent über den MCP-Server von Furrow CAM, hat die Datei inzwischen gespeichert. Ersetzen verwirft diese Änderungen; Speichern unter behält beide.",
+      "exists": "{name} existiert bereits",
+      "existsDetail": "Beim Ersetzen geht der jetzige Inhalt verloren; „Speichern unter“ behält beides.",
       "replace": "Ersetzen",
       "saveAs": "Speichern unter…",
       "cancel": "Abbrechen"

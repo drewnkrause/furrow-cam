@@ -483,6 +483,8 @@
       "keep": "Mijn wijzigingen houden",
       "changed": "{name} is gewijzigd sinds het werd geopend",
       "changedDetail": "Een ander programma, zoals een AI-assistent via de MCP-server van Furrow CAM, heeft het intussen bewaard. Vervangen gooit die wijzigingen weg; met Bewaar als blijven beide behouden.",
+      "exists": "{name} bestaat al",
+      "existsDetail": "Vervangen gooit de huidige inhoud weg; Bewaar als bewaart beide.",
       "replace": "Vervangen",
       "saveAs": "Bewaar als…",
       "cancel": "Annuleer"
