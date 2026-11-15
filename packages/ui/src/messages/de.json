@@ -729,7 +729,8 @@
       "allHidden": "Jede aktive Operation schneidet etwas Ausgeblendetes: blende es ein, um zu exportieren.",
       "noEnabled": "Es gibt keine aktivierten Operationen zum Exportieren.",
       "noneHasToolpath": "Keine der aktivierten Operationen hat eine Werkzeugbahn zum Exportieren.",
-      "noToolpath": "Keine Werkzeugbahn, aus dem Programm ausgelassen."
+      "noToolpath": "Keine Werkzeugbahn, aus dem Programm ausgelassen.",
+      "notFinite": "Eine Koordinate oder ein Vorschub der Werkzeugbahn ist keine Zahl, daher wurde kein Programm geschrieben."
     },
     "grbl": {
       "customBlockMove": "{after, select, yes {Zeile {line}, nach dem Block {block, select, programStart {Programmstart} toolChangePad {Werkzeugwechsel auf der Platte} toolChange {Werkzeugwechsel} operationStart {Operationsstart} other {Programmende}},} other {{block, select, programStart {Programmstart} toolChangePad {Werkzeugwechsel auf der Platte} toolChange {Werkzeugwechsel} operationStart {Operationsstart} other {Programmende}}: Zeile {line}}} {problem, select, material {fährt durch {amount, number} mm Material} belowBottom {fährt unter den Boden des Rohteils auf Z{amount}} unknownPosition {fährt von einer unbekannten Position unter die Oberseite des Rohteils} unreadable {kann nicht gelesen werden, daher wird das Programm ab dort nicht auf Fahrten ins Rohteil geprüft} other {lässt das Werkzeug an einer Stelle, die sich nicht verfolgen lässt, daher wird das Programm ab dort nicht auf Fahrten ins Rohteil geprüft}}.",

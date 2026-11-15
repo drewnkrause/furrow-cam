@@ -729,7 +729,8 @@
       "allHidden": "Etkin her işlem gizli bir şeyi kesiyor: dışa aktarmak için gösterin.",
       "noEnabled": "Dışa aktarılacak etkin işlem yok.",
       "noneHasToolpath": "Etkin işlemlerin hiçbirinde dışa aktarılacak takım yolu yok.",
-      "noToolpath": "Takım yolu yok, programa dahil edilmedi."
+      "noToolpath": "Takım yolu yok, programa dahil edilmedi.",
+      "notFinite": "Takım yolunun bir koordinatı veya ilerlemesi sayı değil, bu yüzden program yazılmadı."
     },
     "grbl": {
       "customBlockMove": "{after, select, yes {{block, select, programStart {Program başlangıcı} toolChangePad {Ped üzerinde takım değişimi} toolChange {Takım değişimi} operationStart {İşlem başlangıcı} other {Program sonu}} bloğundan sonraki {line}. satır} other {{block, select, programStart {Program başlangıcı} toolChangePad {Ped üzerinde takım değişimi} toolChange {Takım değişimi} operationStart {İşlem başlangıcı} other {Program sonu}}: {line}. satır}} {problem, select, material {{amount, number} mm malzemenin içinden geçiyor} belowBottom {Z{amount} ile ham malzeme tabanının altına iniyor} unknownPosition {bilinmeyen bir konumdan ham malzeme üstünün altına iniyor} unreadable {okunamıyor; bu nedenle program o noktadan sonra ham malzemeye giren hareketler için denetlenmiyor} other {takımı izlenemeyen bir konumda bırakıyor; bu nedenle program o noktadan sonra ham malzemeye giren hareketler için denetlenmiyor}}.",
