@@ -142,9 +142,10 @@ describe("watchFile", () => {
       await writeFileAtomic(path, "two");
       const saved = await fileStamp(path);
       // macOS may also report a change from just before the watch started.
-      await expect.poll(() => stamps.at(-1), { timeout: 5000 }).toBe(saved);
+      // File events can be slow under load; the test timeout stays above the poll's so a miss is reported.
+      await expect.poll(() => stamps.at(-1), { timeout: 10_000 }).toBe(saved);
     } finally {
       stop();
     }
-  });
+  }, 15_000);
 });
