@@ -4,6 +4,7 @@ import {
   below,
   dumbbell,
   expectNoLinkThroughStock,
+  expectNoWideCut,
   island,
   lifts,
   pocketOperation,
@@ -20,6 +21,14 @@ import { pocketToolpath } from "./pocket";
 // paths in pocket.test.ts (#386); a link along the lap runs on what the lap cut.
 
 const options = { safeZ: 5, entryClearance: 1 };
+const LEVELS = [-2, -4, -6];
+/** 40% of the 6 mm tool. */
+const STEP_OVER = 2.4;
+
+/** On the laps, cut first at each level, the first of them full width: 3 mm inside the walls and outside the island. */
+const onLaps = ([x, y]: [number, number]) =>
+  Math.abs(Math.max(Math.abs(x - 50), Math.abs(y - 50)) - 47) < 1e-2 ||
+  Math.abs(Math.hypot(x - 50, y - 50) - 13) < 0.1;
 
 function linear(angle: 0 | 90 | 45 | -45, shapes: Shape[], overrides: Partial<PocketParams> = {}) {
   const operation = pocketOperation({ strategy: { type: "linear", angle }, ...overrides }, shapes);
@@ -34,6 +43,7 @@ describe("linear clearing links", () => {
         // Below the first level, every pass linked to the next at depth: out at the end, and at
         // most once to come back down onto a lap.
         expect(lifts(below(toolpath, -2))).toBeLessThanOrEqual(2);
+        expectNoWideCut(toolpath, LEVELS, STEP_OVER, onLaps);
         expectNoLinkThroughStock(toolpath, pocketTool, 100, 100);
       });
     }
@@ -42,6 +52,8 @@ describe("linear clearing links", () => {
   it("crosses a neck the passes leave without cutting through stock", () => {
     for (const angle of [0, 90] as const) {
       const toolpath = linear(angle, [dumbbell], { allowance: 1 });
+      // No more than before #604: out at the end, and once more.
+      expect(lifts(below(toolpath, -2))).toBeLessThanOrEqual(2);
       expectNoLinkThroughStock(toolpath, pocketTool, 100, 40);
     }
   });
