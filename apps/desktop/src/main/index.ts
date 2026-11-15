@@ -940,17 +940,28 @@ async function readProject(path: string) {
  * or the user chose to replace it; `null` to save elsewhere; `undefined` to
  * cancel. Asks again if it changes while the question is open.
  */
-async function confirmReplace(path: string, stamp: FileStamp): Promise<string | null | undefined> {
+async function confirmReplace(
+  path: string,
+  stamp: FileStamp | undefined,
+): Promise<string | null | undefined> {
   const t = tr();
   let seen = stamp;
   for (;;) {
     const now = await fileStamp(path);
     if (now === seen || now === null) return path;
-    // E.g. an assistant saved it through the MCP server.
+    // Changed: e.g. an assistant saved it through the MCP server. Without a stamp
+    // (a recovery copy older than #491) nothing says it changed, only that it's there.
+    const name = projectName(path);
     const { response } = await dialog.showMessageBox({
       type: "warning",
-      message: t("DesktopMain.files.changed", { name: projectName(path) }),
-      detail: t("DesktopMain.files.changedDetail"),
+      message:
+        seen === undefined
+          ? t("DesktopMain.files.exists", { name })
+          : t("DesktopMain.files.changed", { name }),
+      detail:
+        seen === undefined
+          ? t("DesktopMain.files.existsDetail")
+          : t("DesktopMain.files.changedDetail"),
       buttons: [
         t("DesktopMain.files.replace"),
         t("DesktopMain.files.saveAs"),
@@ -1045,7 +1056,8 @@ function registerIpc() {
       let target = known;
       if (target !== null) {
         // Without a stamp, asks before replacing whatever is there.
-        const confirmed = await confirmReplace(target, typeof stamp === "string" ? stamp : null);
+        const lastSeen = typeof stamp === "string" || stamp === null ? stamp : undefined;
+        const confirmed = await confirmReplace(target, lastSeen);
         if (confirmed === undefined) return null;
         target = confirmed;
       }

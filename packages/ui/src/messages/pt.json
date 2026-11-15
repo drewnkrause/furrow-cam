@@ -483,6 +483,8 @@
       "keep": "Manter as minhas",
       "changed": "{name} foi alterado desde que foi aberto",
       "changedDetail": "Outro programa, como um assistente de IA usando o servidor MCP do Furrow CAM, salvou o arquivo nesse meio-tempo. Substituí-lo perde essas alterações; Salvar Como mantém os dois.",
+      "exists": "{name} já existe",
+      "existsDetail": "Substituí-lo perde o conteúdo atual; Salvar Como mantém ambos.",
       "replace": "Substituir",
       "saveAs": "Salvar Como…",
       "cancel": "Cancelar"
