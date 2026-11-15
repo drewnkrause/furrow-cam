@@ -1,4 +1,4 @@
-import type { PocketOperation, PocketParams, PocketStrategy, Shape, Tool } from "@furrow/document";
+import type { PocketParams, PocketStrategy, Shape, Tool } from "@furrow/document";
 import { DRAWING_ID } from "@furrow/document/fixtures";
 import { describe, expect, it } from "vitest";
 import type { Vec3 } from "../../scene/stock";
@@ -8,6 +8,7 @@ import {
   distanceToSegment,
   dumbbell,
   island,
+  pocketOperation as operation,
   rectangle,
   type Segment,
   square,
@@ -19,17 +20,6 @@ import type { Toolpath, ToolpathMove } from "../toolpath";
 import { crossesOnlyInside, pieces } from "./cut";
 import { pocketToolpath } from "./pocket";
 
-const params: PocketParams = {
-  side: "inside",
-  strategy: { type: "offset" },
-  direction: "climb",
-  stepOver: 40,
-  depth: 6,
-  allowance: 0,
-  finishPass: false,
-  ramp: false,
-};
-
 function pocket(
   overrides: Partial<PocketParams> = {},
   shapes: Shape[] = [square],
@@ -39,23 +29,6 @@ function pocket(
     safeZ: 5,
     entryClearance: 1,
   });
-}
-
-function operation(
-  overrides: Partial<PocketParams> = {},
-  shapes: Shape[] = [square],
-  toolOverrides: Partial<Tool> = {},
-): PocketOperation {
-  return {
-    id: "11111111-2222-4333-8444-555555555555",
-    name: "Pocket",
-    enabled: true,
-    stockSide: "top",
-    type: "pocket",
-    targets: shapes.map((shape) => ({ shapeId: shape.id, paths: null })),
-    tool: { ...tool, ...toolOverrides },
-    params: { ...params, ...overrides },
-  };
 }
 
 /** Every move below the stock top, as 2D segments. */

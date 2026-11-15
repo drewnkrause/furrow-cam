@@ -1,13 +1,16 @@
-import type { Model, ReliefFinishOperation, Tool } from "@furrow/document";
+import type { Model, Tool } from "@furrow/document";
 import { ballEndMill, endMill } from "@furrow/document/fixtures";
 import { describe, expect, it } from "vitest";
 import {
   expectFeedsAboveModel,
+  finishing,
+  lifts,
   PYRAMID,
   pyramidMesh,
   RIDGE,
-  retracts,
+  reliefOptions,
   ridgeMesh,
+  SAMPLING,
   STEP,
   stepMesh,
   TWIN,
@@ -20,41 +23,12 @@ import { reliefFinishSteps } from "./finishing";
 // The feeds waterline finishing makes without retracting (#574): from one
 // contour to the next, and down from one level to the next.
 
-function waterline(
-  tool: Tool,
-  model: Model,
-  stepDown: number,
-  rest = false,
-): ReliefFinishOperation {
-  return {
-    id: "3d2c1b0a-9f8e-4d7c-8b6a-5f4e3d2c1b0a",
-    type: "relief_finish",
-    name: "Waterline",
-    enabled: true,
-    stockSide: "top",
-    targets: [],
-    tool,
-    params: {
-      modelId: model.id,
-      strategy: { type: "waterline", stepDown },
-      stepOver: 20,
-      stockToLeave: 0,
-      boundary: { type: "model" },
-      rest,
-    },
-  };
-}
-
-/**
- * Tools are dropped onto cell centres (ADR-0030), so a flat rim reaches up to
- * a cell's worth of the pyramid's slope between them.
- */
-const SAMPLING = 0.8 * 0.1 + 0.005;
-
-const options = { safeZ: 5, entryClearance: 1 };
+const waterline = (stepDown: number) => ({ type: "waterline", stepDown }) as const;
 
 function finish(tool: Tool, model: Model, mesh: Float32Array, stepDown: number): Toolpath {
-  return runSteps(reliefFinishSteps(waterline(tool, model, stepDown), model, mesh, options));
+  return runSteps(
+    reliefFinishSteps(finishing(tool, waterline(stepDown)), model, mesh, reliefOptions),
+  );
 }
 
 describe("waterline links", () => {
@@ -64,7 +38,7 @@ describe("waterline links", () => {
     expect(expectFeedsAboveModel(toolpath, endMill, STEP, stepMesh, 0.005)).toBeGreaterThanOrEqual(
       4,
     );
-    expect(retracts(toolpath)).toBeLessThanOrEqual(2);
+    expect(lifts(toolpath)).toBeLessThanOrEqual(2);
   });
 
   it("retracts over a ridge between contours in reach rather than feeding through it", () => {
@@ -75,9 +49,17 @@ describe("waterline links", () => {
     const levels = new Set(
       toolpath.moves.filter(({ kind, to }) => kind === "feed" && to[2] < -2).map(({ to }) => to[2]),
     );
-    // Over the ridge once on each of the six levels below it, and out at the end.
     expect(levels.size).toBe(6);
-    expect(retracts(toolpath)).toBeGreaterThanOrEqual(levels.size + 1);
+    // Each time the tool leaves the cut below the ridge, from one side of it, where it comes back down.
+    const { moves } = toolpath;
+    const sides = moves.flatMap((move, i) => {
+      const from = moves[i - 1]?.to;
+      if (!from || from[2] >= -2 || move.kind !== "rapid" || move.to[2] <= from[2]) return [];
+      const back = moves.slice(i).find(({ kind }) => kind !== "rapid")?.to;
+      return back ? [[from[0] < 12, back[0] < 12]] : [];
+    });
+    // Over the ridge once on each of the six levels below it.
+    expect(sides.filter(([from, back]) => from !== back)).toHaveLength(levels.size);
   });
 
   it("retracts between contours out of reach, never feeding through the model", () => {
@@ -89,7 +71,7 @@ describe("waterline links", () => {
     );
     // From one pyramid to the other at least once on each level around them.
     expect(levels.size).toBe(4);
-    expect(retracts(toolpath)).toBeGreaterThanOrEqual(levels.size);
+    expect(lifts(toolpath)).toBeGreaterThanOrEqual(levels.size);
   });
 
   it("goes from level to level down a pyramid without going into the model", () => {
@@ -112,8 +94,8 @@ describe("waterline links", () => {
     const segments: number[] = [];
     for (let z = -5; z >= -10; z--) segments.push(x, 0, z, x, 3, z, x, 7, z, x, 10, z);
     const toolpath = runSteps(
-      reliefFinishSteps(waterline(endMill, STEP, 1, true), STEP, stepMesh, {
-        ...options,
+      reliefFinishSteps(finishing(endMill, waterline(1), { rest: true }), STEP, stepMesh, {
+        ...reliefOptions,
         rest: { cuts: [{ tool: endMill, segments: new Float32Array(segments) }], stock: null },
       }),
     );

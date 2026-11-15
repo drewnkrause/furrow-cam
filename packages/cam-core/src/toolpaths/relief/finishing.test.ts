@@ -11,10 +11,13 @@ import { signedArea } from "../../geometry/clipper";
 import { modelView } from "../../scene/sides";
 import { cutterProfile, simulateCuts } from "../../simulation/simulation";
 import {
+  finishing,
+  reliefOptions as options,
   PYRAMID,
   placed,
   pyramidMesh,
   rect,
+  SAMPLING,
   STEP,
   segmentsOf,
   stepMesh,
@@ -32,33 +35,6 @@ import { reliefFinishSteps } from "./finishing";
 import { type SpiralRun, spiralRuns } from "./spiral";
 import { isoLines, tipHeightsSteps } from "./waterline";
 
-function finishing(
-  tool: Tool,
-  strategy: FinishingStrategy,
-  params: Partial<ReliefFinishOperation["params"]> = {},
-): ReliefFinishOperation {
-  return {
-    id: "7c1e4b2a-9d3f-4a6e-8b5c-2f0e1d9a8b7c",
-    type: "relief_finish",
-    name: "Finish",
-    enabled: true,
-    stockSide: "top",
-    targets: [],
-    tool,
-    params: {
-      modelId: STEP.id,
-      strategy,
-      stepOver: 20,
-      stockToLeave: 0,
-      boundary: { type: "model" },
-      rest: false,
-      ...params,
-    },
-  };
-}
-
-const options = { safeZ: 5, entryClearance: 1 };
-
 function finish(
   tool: Tool,
   strategy: FinishingStrategy,
@@ -72,14 +48,6 @@ function finish(
 type Feed = Extract<ToolpathMove, { kind: "feed" }>;
 const cuts = ({ moves }: Toolpath, tool: Tool) =>
   moves.filter((move): move is Feed => move.kind === "feed" && move.feedRate === tool.feedRate);
-
-/** Fails if the stock after `toolpath` is anywhere below the model offset by `stockToLeave`. */
-/**
- * Tools are dropped onto cell centres (ADR-0030), so a cutter's rim may reach
- * up to a cell's worth of a slope between them, as with parallel passes: the
- * pyramid's faces rise 0.8 in 1, over 0.1 mm cells.
- */
-const SAMPLING = 0.8 * 0.1 + 0.005;
 
 /** Fails if the stock after `toolpath` is anywhere more than `tolerance` below the model offset by `stockToLeave`. */
 function expectNoGouge(

@@ -1,4 +1,12 @@
-import type { Model, PocketOperation, PocketParams, Shape, Tool } from "@furrow/document";
+import type {
+  FinishingStrategy,
+  Model,
+  PocketOperation,
+  PocketParams,
+  ReliefFinishOperation,
+  Shape,
+  Tool,
+} from "@furrow/document";
 import { DRAWING_ID, model as modelFixture } from "@furrow/document/fixtures";
 import { expect } from "vitest";
 import { modelView } from "../scene/sides";
@@ -160,8 +168,12 @@ export const pocketTool: Tool = {
   color: "#2563eb",
 };
 
-/** A pocket 6 mm deep of `shapes` with `pocketTool`. */
-export function pocketOperation(params: Partial<PocketParams>, shapes: Shape[]): PocketOperation {
+/** A pocket 6 mm deep of `shapes` with `pocketTool`, changed by `params` and `toolOverrides`. */
+export function pocketOperation(
+  params: Partial<PocketParams> = {},
+  shapes: Shape[] = [square],
+  toolOverrides: Partial<Tool> = {},
+): PocketOperation {
   return {
     id: "11111111-2222-4333-8444-555555555555",
     name: "Pocket",
@@ -169,7 +181,7 @@ export function pocketOperation(params: Partial<PocketParams>, shapes: Shape[]):
     stockSide: "top",
     type: "pocket",
     targets: shapes.map((shape) => ({ shapeId: shape.id, paths: null })),
-    tool: pocketTool,
+    tool: { ...pocketTool, ...toolOverrides },
     params: {
       side: "inside",
       strategy: { type: "offset" },
@@ -184,10 +196,50 @@ export function pocketOperation(params: Partial<PocketParams>, shapes: Shape[]):
   };
 }
 
-/** Rapids that go up, from below the retract height. */
-export const retracts = ({ moves }: Toolpath) =>
+/**
+ * Rapids that go up, to the retract height or the entry clearance: every
+ * time the tool leaves the cut. (`pocket.test.ts` counts only those up to
+ * the retract height.)
+ */
+export const lifts = ({ moves }: Toolpath) =>
   moves.filter((move, i) => move.kind === "rapid" && move.to[2] > (moves[i - 1]?.to[2] ?? Infinity))
     .length;
+
+/** The machine's heights for the relief tests: a 5 mm retract height, 1 mm entry clearance. */
+export const reliefOptions = { safeZ: 5, entryClearance: 1 };
+
+/**
+ * Tools are dropped onto cell centres (ADR-0030), so a flat end mill's rim
+ * may reach up to a cell's worth of a slope between them: the pyramid's faces
+ * rise 0.8 in 1, over 0.1 mm cells.
+ */
+export const SAMPLING = 0.8 * 0.1 + 0.005;
+
+/** A finishing operation over the models here (they share the fixture's id) with `strategy`. */
+export function finishing(
+  tool: Tool,
+  strategy: FinishingStrategy,
+  params: Partial<ReliefFinishOperation["params"]> = {},
+): ReliefFinishOperation {
+  return {
+    id: "7c1e4b2a-9d3f-4a6e-8b5c-2f0e1d9a8b7c",
+    type: "relief_finish",
+    name: "Finish",
+    enabled: true,
+    stockSide: "top",
+    targets: [],
+    tool,
+    params: {
+      modelId: modelFixture.id,
+      strategy,
+      stepOver: 20,
+      stockToLeave: 0,
+      boundary: { type: "model" },
+      rest: false,
+      ...params,
+    },
+  };
+}
 
 /** A move in plan, from one point to another. */
 export type Segment = [[number, number], [number, number]];
@@ -224,11 +276,15 @@ export function distanceToSegment(point: [number, number], [a, b]: Segment): num
   return Math.hypot(point[0] - a[0] - t * dx, point[1] - a[1] - t * dy);
 }
 
+/** Side of the cells `widestCut` files cuts under: how far it measures exactly. */
+const WIDTH_REACH = 5;
+
 /**
  * How far from the cuts before it at `z` the tool centre gets, every
  * millimetre along each cut, the points `starting` holds for left out: how
- * wide it cuts sideways. A link fed at depth through stock not yet cleared
- * at `z` is as wide as the stock it crosses.
+ * wide it cuts sideways, exactly up to `WIDTH_REACH` and more than that
+ * beyond. A link fed at depth through stock not yet cleared at `z` is as
+ * wide as the stock it crosses.
  */
 export function widestCut(
   toolpath: Toolpath,
@@ -236,25 +292,40 @@ export function widestCut(
   starting: (point: [number, number]) => boolean,
 ): number {
   const cuts = cutsAt(toolpath, z);
+  // Each cut filed under every cell it comes within a cell's side of, so a
+  // point's own cell holds every earlier cut within `WIDTH_REACH` of it.
+  const cells = new Map<string, Segment[]>();
+  const cellOf = (x: number, y: number) =>
+    `${Math.floor(x / WIDTH_REACH)},${Math.floor(y / WIDTH_REACH)}`;
+  const file = (cut: Segment) => {
+    const [[ax, ay], [bx, by]] = cut;
+    const first = (v: number) => Math.floor(v / WIDTH_REACH) - 1;
+    const last = (v: number) => Math.floor(v / WIDTH_REACH) + 1;
+    for (let i = first(Math.min(ax, bx)); i <= last(Math.max(ax, bx)); i++) {
+      for (let j = first(Math.min(ay, by)); j <= last(Math.max(ay, by)); j++) {
+        const cell = cells.get(`${i},${j}`) ?? [];
+        cell.push(cut);
+        cells.set(`${i},${j}`, cell);
+      }
+    }
+  };
   let widest = 0;
-  cuts.forEach(([a, b], i) => {
+  for (const [i, cut] of cuts.entries()) {
+    const [a, b] = cut;
     const count = Math.max(4, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1])));
     for (let k = 1; k <= count; k++) {
       const t = k / count;
       const point: [number, number] = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
       if (starting(point)) continue;
-      let nearest = Infinity;
-      for (let j = 0; j < i; j++) {
-        nearest = Math.min(nearest, distanceToSegment(point, cuts[j] as Segment));
+      // Along a cut, its own start; the first cut of a level has nothing before it.
+      let nearest = i === 0 ? Infinity : Math.hypot(point[0] - a[0], point[1] - a[1]);
+      for (const earlier of cells.get(cellOf(...point)) ?? []) {
+        nearest = Math.min(nearest, distanceToSegment(point, earlier));
       }
-      // Along a cut, its own start.
-      nearest = Math.min(
-        nearest,
-        Math.hypot(point[0] - a[0], point[1] - a[1]) * (i === 0 ? Infinity : 1),
-      );
       widest = Math.max(widest, nearest);
     }
-  });
+    file(cut);
+  }
   return widest;
 }
 
@@ -276,10 +347,11 @@ export function expectNoWideCut(
 }
 
 /** `toolpath` from its first move below `z`: below the first level, where the stock above is cleared. */
-export const below = (toolpath: Toolpath, z: number): Toolpath => ({
-  ...toolpath,
-  moves: toolpath.moves.slice(toolpath.moves.findIndex((move) => move.to[2] < z - 1e-9)),
-});
+export function below(toolpath: Toolpath, z: number): Toolpath {
+  const first = toolpath.moves.findIndex((move) => move.to[2] < z - 1e-9);
+  expect(first).toBeGreaterThanOrEqual(0);
+  return { ...toolpath, moves: toolpath.moves.slice(first) };
+}
 
 /** Every move of `toolpath` as segments for the simulation, six numbers each. */
 export function segmentsOf({ moves }: Toolpath): Float32Array {

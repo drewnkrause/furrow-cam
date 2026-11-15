@@ -7,9 +7,9 @@ import {
   expectNoLinkThroughStock,
   expectNoWideCut,
   island,
+  lifts,
   pocketOperation,
   pocketTool,
-  retracts,
   square,
 } from "../link-test-utils";
 import { pocketToolpath } from "./pocket";
@@ -73,8 +73,15 @@ describe("peel clearing links", () => {
           const back = moves.slice(i).find(({ kind }) => kind !== "rapid")?.to;
           return back ? [overIsland(from, back)] : [];
         });
-        expect(over.every(Boolean)).toBe(true);
-        expect(retracts({ ...toolpath, moves })).toBe(over.length + 1);
+        if (start === "outside") {
+          // From the walls in, some fronts are only reached over the island.
+          expect(over.length).toBeGreaterThan(0);
+          expect(over.every(Boolean)).toBe(true);
+        } else {
+          // Grown out from the centre or the island: down to the end.
+          expect(over).toEqual([]);
+          expect(lifts({ ...toolpath, moves })).toBe(1);
+        }
         expectNoWideCut(toolpath, LEVELS, STEP_OVER, starting[start]);
         expectNoLinkThroughStock(toolpath, pocketTool, 100, 100);
       });

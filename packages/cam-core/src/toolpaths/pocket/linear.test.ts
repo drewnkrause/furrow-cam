@@ -5,9 +5,9 @@ import {
   dumbbell,
   expectNoLinkThroughStock,
   island,
+  lifts,
   pocketOperation,
   pocketTool,
-  retracts,
   square,
 } from "../link-test-utils";
 import { pocketToolpath } from "./pocket";
@@ -33,7 +33,7 @@ describe("linear clearing links", () => {
         const toolpath = linear(angle, [square, island], { ramp });
         // Below the first level, every pass linked to the next at depth: out at the end, and at
         // most once to come back down onto a lap.
-        expect(retracts(below(toolpath, -2))).toBeLessThanOrEqual(2);
+        expect(lifts(below(toolpath, -2))).toBeLessThanOrEqual(2);
         expectNoLinkThroughStock(toolpath, pocketTool, 100, 100);
       });
     }
