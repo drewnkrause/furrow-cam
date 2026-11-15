@@ -46,37 +46,22 @@ const UNREADABLE: Translatable = { code: "workspace.unreadableFile" };
 type Picked = ReadImage & { name: string; key: number };
 
 /**
- * Opens *Relief from image* (PRD-0015), from the empty project's import card
- * or the ribbon (`inRibbon`), beside *Terrain from a map*.
+ * The ribbon's button opening *Relief from image* (PRD-0015), beside
+ * *Terrain from a map*.
  */
-export function ImageReliefButton({ inRibbon = false }: { inRibbon?: boolean }) {
+export function ImageReliefButton() {
   const t = useTranslations("ImageRelief");
   const [open, setOpen] = useState(false);
   const dialog = open && <ImageReliefDialog onClose={() => setOpen(false)} />;
-  if (inRibbon)
-    return (
-      <>
-        <RibbonButton
-          icon={<ImageIcon />}
-          label={t("ribbon")}
-          aria-label={t("title")}
-          hint={t("hint")}
-          onClick={() => setOpen(true)}
-        />
-        {dialog}
-      </>
-    );
   return (
     <>
-      <Button
-        variant="outline"
-        size="compact"
+      <RibbonButton
+        icon={<ImageIcon />}
+        label={t("ribbon")}
+        aria-label={t("title")}
+        hint={t("hint")}
         onClick={() => setOpen(true)}
-        className="justify-self-start"
-      >
-        <ImageIcon />
-        {t("open")}
-      </Button>
+      />
       {dialog}
     </>
   );

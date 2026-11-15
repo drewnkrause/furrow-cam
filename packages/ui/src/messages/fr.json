@@ -1498,7 +1498,6 @@
       "mm": "Millimètres",
       "in": "Pouces"
     },
-    "start": "Importez un dessin SVG ou DXF, ou un modèle STL ou STEP, pour commencer.",
     "importDrawing": "Importer un SVG/DXF…",
     "importModel": "Importer un STL ou STEP…",
     "dpi": "PPP",
@@ -1515,7 +1514,6 @@
     "defaultText": "Texte"
   },
   "Terrain": {
-    "open": "Terrain depuis une carte…",
     "ribbon": "Terrain",
     "hint": "Créer un modèle en relief d'une zone sur une carte",
     "title": "Terrain depuis une carte",
@@ -1563,7 +1561,6 @@
     "defaultName": "Terrain"
   },
   "ImageRelief": {
-    "open": "Relief depuis une image…",
     "ribbon": "Image",
     "hint": "Créer un modèle en relief à partir d'une image en niveaux de gris",
     "title": "Relief depuis une image",

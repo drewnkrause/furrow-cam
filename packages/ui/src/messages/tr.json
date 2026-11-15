@@ -1498,7 +1498,6 @@
       "mm": "Milimetre",
       "in": "İnç"
     },
-    "start": "Başlamak için bir SVG veya DXF çizimi ya da bir STL veya STEP modeli içe aktarın.",
     "importDrawing": "SVG/DXF içe aktar…",
     "importModel": "STL veya STEP içe aktar…",
     "dpi": "DPI",
@@ -1515,7 +1514,6 @@
     "defaultText": "Metin"
   },
   "Terrain": {
-    "open": "Haritadan arazi…",
     "ribbon": "Arazi",
     "hint": "Haritadaki bir alanın kabartma modelini oluşturun",
     "title": "Haritadan arazi",
@@ -1563,7 +1561,6 @@
     "defaultName": "Arazi"
   },
   "ImageRelief": {
-    "open": "Görüntüden kabartma…",
     "ribbon": "Görüntü",
     "hint": "Gri tonlamalı bir görüntüden kabartma modeli oluşturun",
     "title": "Görüntüden kabartma",

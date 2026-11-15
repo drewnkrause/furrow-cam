@@ -72,41 +72,24 @@ const SHAPE_ICONS: Record<AreaShape, React.ReactNode> = {
 };
 
 /**
- * Opens *Terrain from a map* (PRD-0014), from the empty project's import card
- * or the ribbon (`inRibbon`). Where the terrain can't become the project's
+ * The ribbon's button opening *Terrain from a map* (PRD-0014). Where the terrain can't become the project's
  * model (a server that can't store meshes, a project that has its model),
  * it can still be downloaded (T8).
  */
-export function TerrainButton({ inRibbon = false }: { inRibbon?: boolean }) {
+export function TerrainButton() {
   const t = useTranslations("Terrain");
   const [open, setOpen] = useState(false);
   const dialog = open && <TerrainDialog onClose={() => setOpen(false)} />;
-  if (inRibbon)
-    return (
-      <>
-        <RibbonButton
-          icon={<MountainIcon />}
-          label={t("ribbon")}
-          aria-label={t("title")}
-          data-demo="ribbon-terrain"
-          hint={t("hint")}
-          onClick={() => setOpen(true)}
-        />
-        {dialog}
-      </>
-    );
   return (
     <>
-      <Button
-        variant="outline"
-        size="compact"
-        data-demo="import-terrain"
+      <RibbonButton
+        icon={<MountainIcon />}
+        label={t("ribbon")}
+        aria-label={t("title")}
+        data-demo="ribbon-terrain"
+        hint={t("hint")}
         onClick={() => setOpen(true)}
-        className="justify-self-start"
-      >
-        <MountainIcon />
-        {t("open")}
-      </Button>
+      />
       {dialog}
     </>
   );

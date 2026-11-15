@@ -1498,7 +1498,6 @@
       "mm": "Millimeter",
       "in": "Zoll"
     },
-    "start": "Importiere eine SVG- oder DXF-Zeichnung oder ein STL- oder STEP-Modell, um zu beginnen.",
     "importDrawing": "SVG/DXF importieren…",
     "importModel": "STL oder STEP importieren…",
     "dpi": "DPI",
@@ -1515,7 +1514,6 @@
     "defaultText": "Text"
   },
   "Terrain": {
-    "open": "Gelände aus einer Karte…",
     "ribbon": "Gelände",
     "hint": "Ein Reliefmodell eines Gebiets auf einer Karte erstellen",
     "title": "Gelände aus einer Karte",
@@ -1563,7 +1561,6 @@
     "defaultName": "Gelände"
   },
   "ImageRelief": {
-    "open": "Relief aus Bild…",
     "ribbon": "Bild",
     "hint": "Ein Reliefmodell aus einem Graustufenbild erstellen",
     "title": "Relief aus Bild",

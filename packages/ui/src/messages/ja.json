@@ -1498,7 +1498,6 @@
       "mm": "ミリメートル",
       "in": "インチ"
     },
-    "start": "SVG・DXF 図面または STL・STEP モデルをインポートして始めましょう。",
     "importDrawing": "SVG/DXF をインポート…",
     "importModel": "STL・STEP をインポート…",
     "dpi": "DPI",
@@ -1515,7 +1514,6 @@
     "defaultText": "Text"
   },
   "Terrain": {
-    "open": "地図から地形…",
     "ribbon": "地形",
     "hint": "地図上の範囲から立体レリーフのモデルを作成",
     "title": "地図から地形",
@@ -1563,7 +1561,6 @@
     "defaultName": "地形"
   },
   "ImageRelief": {
-    "open": "画像からレリーフ…",
     "ribbon": "画像",
     "hint": "グレースケール画像からレリーフモデルを作成",
     "title": "画像からレリーフ",

@@ -1498,7 +1498,6 @@
       "mm": "Millimetres",
       "in": "Inches"
     },
-    "start": "Import an SVG or DXF drawing, or an STL or STEP model, to start.",
     "importDrawing": "Import SVG/DXF…",
     "importModel": "Import STL or STEP…",
     "dpi": "DPI",
@@ -1515,7 +1514,6 @@
     "defaultText": "Text"
   },
   "Terrain": {
-    "open": "Terrain from a map…",
     "ribbon": "Terrain",
     "hint": "Make a relief model of an area on a map",
     "title": "Terrain from a map",
@@ -1563,7 +1561,6 @@
     "defaultName": "Terrain"
   },
   "ImageRelief": {
-    "open": "Relief from image…",
     "ribbon": "Image",
     "hint": "Make a relief model from a greyscale image",
     "title": "Relief from image",
