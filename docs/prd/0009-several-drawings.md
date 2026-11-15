@@ -1,6 +1,6 @@
 # PRD-0009: Several drawings, arranged on the stock
 
-- **Status:** Draft
+- **Status:** Shipped
 - **Author:** Federico Vezzoli
 - **Created:** 2026-10-21
 - **Related:** PRD-0001, PRD-0002, PRD-0005, ADR-0022, ADR-0031, ADR-0038, ADR-0055
