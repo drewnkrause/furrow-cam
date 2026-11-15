@@ -80,7 +80,7 @@ beforeEach(() => {
 });
 
 async function openWithArea(host = createMemoryHost({ document: createProjectDocument() })) {
-  renderWorkspace(<TerrainButton inRibbon />, host);
+  renderWorkspace(<TerrainButton />, host);
   fireEvent.click(screen.getByRole("button", { name: "Terrain from a map" }));
   fireEvent.click(await screen.findByRole("button", { name: "Draw" }));
   // The area's step, then the model's, with its preview.
@@ -154,7 +154,7 @@ describe("TerrainDialog", () => {
   it("tells the host when its services may be reached: only while it is open", () => {
     const terrainServices = vi.fn();
     renderWorkspace(
-      <TerrainButton inRibbon />,
+      <TerrainButton />,
       createMemoryHost({ document: createProjectDocument() }, { terrainServices }),
     );
     expect(terrainServices).not.toHaveBeenCalled();
@@ -180,10 +180,7 @@ describe("TerrainDialog's steps", () => {
   });
 
   it("browses the map until a shape is picked, and again once it is drawn", async () => {
-    renderWorkspace(
-      <TerrainButton inRibbon />,
-      createMemoryHost({ document: createProjectDocument() }),
-    );
+    renderWorkspace(<TerrainButton />, createMemoryHost({ document: createProjectDocument() }));
     fireEvent.click(screen.getByRole("button", { name: "Terrain from a map" }));
     expect(screen.queryByRole("button", { name: "Move" })).toBeNull();
     expect(screen.getByRole("button", { name: "Next" })).toHaveProperty("disabled", true);
@@ -207,7 +204,7 @@ describe("TerrainDialog's steps", () => {
       on ? new Promise<void>((resolve) => (open = resolve)) : undefined,
     );
     renderWorkspace(
-      <TerrainButton inRibbon />,
+      <TerrainButton />,
       createMemoryHost({ document: createProjectDocument() }, { terrainServices }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Terrain from a map" }));

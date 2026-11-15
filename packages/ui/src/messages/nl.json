@@ -1498,7 +1498,6 @@
       "mm": "Millimeter",
       "in": "Inch"
     },
-    "start": "Importeer een SVG- of DXF-tekening, of een STL- of STEP-model, om te beginnen.",
     "importDrawing": "SVG/DXF importeren…",
     "importModel": "STL of STEP importeren…",
     "dpi": "DPI",
@@ -1515,7 +1514,6 @@
     "defaultText": "Tekst"
   },
   "Terrain": {
-    "open": "Terrein van een kaart…",
     "ribbon": "Terrein",
     "hint": "Een reliëfmodel maken van een gebied op een kaart",
     "title": "Terrein van een kaart",
@@ -1564,7 +1562,6 @@
     "defaultName": "Terrein"
   },
   "ImageRelief": {
-    "open": "Reliëf van een afbeelding…",
     "ribbon": "Afbeelding",
     "hint": "Maak een reliëfmodel van een grijswaardenafbeelding",
     "title": "Reliëf van een afbeelding",

@@ -1498,7 +1498,6 @@
       "mm": "毫米",
       "in": "英寸"
     },
-    "start": "导入SVG或DXF图纸，或STL或STEP模型以开始。",
     "importDrawing": "导入SVG/DXF…",
     "importModel": "导入STL或STEP…",
     "dpi": "DPI",
@@ -1515,7 +1514,6 @@
     "defaultText": "Text"
   },
   "Terrain": {
-    "open": "从地图生成地形…",
     "ribbon": "地形",
     "hint": "根据地图上的区域生成浮雕模型",
     "title": "从地图生成地形",
@@ -1564,7 +1562,6 @@
     "defaultName": "地形"
   },
   "ImageRelief": {
-    "open": "从图像生成浮雕…",
     "ribbon": "图像",
     "hint": "从灰度图像生成浮雕模型",
     "title": "从图像生成浮雕",
