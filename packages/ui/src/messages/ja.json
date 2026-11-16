@@ -1101,7 +1101,9 @@
     "show": "{name} を表示",
     "hide": "{name} を非表示",
     "lock": "{name} をロック",
-    "unlock": "{name} のロックを解除"
+    "unlock": "{name} のロックを解除",
+    "download": "{name} を STL でダウンロード",
+    "downloadFailed": "このモデルのファイルを読み込めませんでした。"
   },
   "ToolpathProgress": {
     "title": "ツールパスを計算中 · {total}件中{done}件完了",

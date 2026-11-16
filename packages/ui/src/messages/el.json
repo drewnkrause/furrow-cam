@@ -1101,7 +1101,9 @@
     "show": "Εμφάνιση {name}",
     "hide": "Απόκρυψη {name}",
     "lock": "Κλείδωμα {name}",
-    "unlock": "Ξεκλείδωμα {name}"
+    "unlock": "Ξεκλείδωμα {name}",
+    "download": "Λήψη του {name} ως STL",
+    "downloadFailed": "Δεν ήταν δυνατή η ανάγνωση του αρχείου αυτού του μοντέλου."
   },
   "ToolpathProgress": {
     "title": "Υπολογισμός διαδρομών εργαλείου · {done} από {total} ολοκληρώθηκαν",

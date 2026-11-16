@@ -1101,7 +1101,9 @@
     "show": "Mostrar {name}",
     "hide": "Ocultar {name}",
     "lock": "Bloquear {name}",
-    "unlock": "Desbloquear {name}"
+    "unlock": "Desbloquear {name}",
+    "download": "Descargar {name} como STL",
+    "downloadFailed": "No se pudo leer el archivo de este modelo."
   },
   "ToolpathProgress": {
     "title": "Calculando trayectorias · {done} de {total} hechas",

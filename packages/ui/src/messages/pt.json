@@ -1101,7 +1101,9 @@
     "show": "Mostrar {name}",
     "hide": "Ocultar {name}",
     "lock": "Bloquear {name}",
-    "unlock": "Desbloquear {name}"
+    "unlock": "Desbloquear {name}",
+    "download": "Baixar {name} como STL",
+    "downloadFailed": "Não foi possível ler o arquivo deste modelo."
   },
   "ToolpathProgress": {
     "title": "Calculando percursos · {done} de {total} prontos",
