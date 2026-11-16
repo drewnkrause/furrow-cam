@@ -14,7 +14,7 @@ import {
   toolProblem,
 } from "@furrow/document";
 import type { Rect } from "../geometry/bounds";
-import { boxRect } from "../scene/model";
+import { boxRect, placedModelBox } from "../scene/model";
 import {
   drillTargets,
   type Flip,
@@ -30,7 +30,7 @@ import { activeTouchOff } from "../scene/touch-off";
 import { cutterProfile, type SimulationCut } from "../simulation/simulation";
 import { drillToolpath } from "./drill";
 import { engraveCut, engraveToolpath } from "./engrave";
-import { holdingTabStrips } from "./holding-tabs";
+import { holdingTabStrips, holdingTabTop } from "./holding-tabs";
 import type { ToolpathMessage } from "./messages";
 import { pocketToolpath } from "./pocket/pocket";
 import { profileToolpath } from "./profile";
@@ -39,6 +39,7 @@ import {
   createCache,
   finishingBoundary,
   type HoldingTab,
+  RELIEF_TOLERANCE,
   type ReliefCache,
   type RestOptions,
   roughingArea,
@@ -82,9 +83,8 @@ export type ToolpathInput = {
    */
   flip: Flip | null;
   /**
-   * In a two-sided project, the holding tabs a 3D operation leaves, in its
-   * side's stock coordinates (ADR-0063), empty without any; `null` for every
-   * other operation.
+   * The holding tabs a 3D operation leaves, in its side's stock coordinates
+   * (ADR-0063, ADR-0086), empty without any; `null` for every other operation.
    */
   tabs: HoldingTab[] | null;
   /**
@@ -151,9 +151,9 @@ export function toolpathInputs(
     below: Math.max(0, doc.stock.thickness - pinDepth(doc.stock.thickness, lineUp)),
   };
   const enabled = doc.operations.filter((operation) => operation.enabled);
-  const { twoSided, width, height, thickness } = doc.stock;
+  const { twoSided, width, height, thickness, tabs: holding } = doc.stock;
   const size = { width, height, thickness };
-  const strips = twoSided?.tabs ? holdingTabStrips(size, doc.models, twoSided.tabs) : [];
+  const strips = holding ? holdingTabStrips(size, doc.models, holding) : [];
   const inputs = new Map<Operation, ToolpathInput>();
   function inputOf(operation: Operation): ToolpathInput {
     const known = inputs.get(operation);
@@ -189,22 +189,18 @@ export function toolpathInputs(
           : -doc.stock.thickness,
       parting: sided && (bottom ? sided.partingDepth - doc.stock.thickness : -sided.partingDepth),
       flip,
-      // The bottom side leaves the tabs up to their thickness past the
-      // parting plane, the top side stops at the plane over them (ADR-0063);
-      // neither cuts into full-height ones (#606).
       tabs:
-        sided &&
-        strips.map(({ modelId, at, to }) => ({
-          modelId,
-          from: flip ? flipPoint2(flip, at) : at,
-          to: flip ? flipPoint2(flip, to) : to,
-          width: sided.tabs?.width ?? 0,
-          top: sided.tabs?.fullHeight
-            ? 0
-            : flip
-              ? sided.partingDepth - doc.stock.thickness + (sided.tabs?.thickness ?? 0)
-              : -sided.partingDepth,
-        })),
+        modelId === null
+          ? null
+          : ((holding &&
+              strips.map(({ modelId, at, to }) => ({
+                modelId,
+                from: flip ? flipPoint2(flip, at) : at,
+                to: flip ? flipPoint2(flip, to) : to,
+                width: holding.width,
+                top: holdingTabTop(doc.stock, holding, bottom),
+              }))) ??
+            []),
       reachesOther: reachesOtherModel(doc, operation, flip, stock),
       safeZ,
       entryClearance,
@@ -615,8 +611,14 @@ function* operationSteps(
       const positions = mesh?.(model.sha256);
       if (!positions) throw new MissingMeshError(model.sha256);
       const warnings: ToolpathMessage[] = [];
-      // Cut all round from both sides, a model with no tabs comes loose (ADR-0063).
-      if (flip && tabs && !tabs.some(({ modelId }) => modelId === model.id)) {
+      // Cut all round from both sides, or one-sided down to the stock bottom,
+      // a model with no tabs comes loose (ADR-0063, ADR-0086).
+      const cutFree =
+        flip !== null ||
+        (parting === null &&
+          stockBottom !== null &&
+          placedModelBox(model).min[2] <= stockBottom + RELIEF_TOLERANCE);
+      if (cutFree && tabs && !tabs.some(({ modelId }) => modelId === model.id)) {
         warnings.push({ code: "toolpath.noHoldingTabs" });
       }
       const boundary =
