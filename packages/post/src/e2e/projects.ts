@@ -851,8 +851,6 @@ export function corpus(): CorpusProject[] {
       title: "Plate",
       covers: "the same part zeroed at the centre of the machine bed, manual spindle",
       document: valid(lowRiderPlate),
-      // The LowRider's Z is slower than the tab's climb.
-      warnings: [{ operation: "Cut out", message: { code: "grbl.slowed", values: { count: 1 } } }],
     },
     {
       name: "svg-part",
