@@ -1,5 +1,6 @@
 import type { HoldingTabs, Model, Point, Stock } from "@furrow/document";
-import { type PlacedModel, placedModelBox } from "../scene/model";
+import { type PlacedModel, placedModelBox, rotatedSize } from "../scene/model";
+import type { Heightmap, HeightmapGrid } from "../simulation/simulation";
 import { loopLength, nearestOnLoops, pointAlong, spreadAlong } from "./tabs";
 
 /**
@@ -85,6 +86,58 @@ export function holdingTabStrips(
       { modelId: model.id, at, to: [at[0] + normal[0] * outward, at[1] + normal[1] * outward] },
     ];
   });
+}
+
+/**
+ * `strip` carried on inward to the model's surface as its `preview` shows it
+ * (`modelHeightmap`, uncovered cells at its bottom), for drawing the tab as
+ * the 3D operations leave it (`reachModel`, #608). A strip whose way in meets
+ * no part of the model, or with no direction, is left as it is.
+ */
+export function reachPreview(
+  strip: HoldingTabStrip,
+  model: PlacedModel,
+  { heights, ...grid }: Heightmap,
+): HoldingTabStrip {
+  const { at, to } = strip;
+  const length = Math.hypot(at[0] - to[0], at[1] - to[1]);
+  if (length === 0) return strip;
+  const [du, dv] = [(at[0] - to[0]) / length, (at[1] - to[1]) / length];
+  const { min } = placedModelBox(model);
+  const scale = model.placement.scale;
+  // Uncovered cells, as the Float32Array holds them.
+  const bottom = Math.fround(-rotatedSize(model.bounds, model.placement.rotation)[2]);
+  // In the preview's frame: unscaled, from the box's corner.
+  const start: Point = [(at[0] - min[0]) / scale, (at[1] - min[1]) / scale];
+  const hit = walkInward(grid, start, [du, dv], (cell) => (heights[cell] as number) > bottom);
+  if (!hit || hit.steps === 0) return strip;
+  return { ...strip, at: [min[0] + hit.point[0] * scale, min[1] + hit.point[1] * scale] };
+}
+
+/**
+ * The first point from `start` along the unit `direction`, a cell at a time,
+ * whose cell of `grid` (from (0, 0)) `covered` says has model under it, with
+ * the steps it took; `null` if none. Shared by the tabs drawn and those cut,
+ * so they end at the same place (#608).
+ */
+export function walkInward(
+  { columns, rows, cellWidth, cellHeight }: HeightmapGrid,
+  [u0, v0]: Point,
+  [du, dv]: Point,
+  covered: (cell: number) => boolean,
+): { point: Point; steps: number } | null {
+  const step = Math.min(cellWidth, cellHeight);
+  const steps = Math.ceil(Math.hypot(columns * cellWidth, rows * cellHeight) / step);
+  for (let k = 0; k <= steps; k++) {
+    const u = u0 + du * k * step;
+    const v = v0 + dv * k * step;
+    // On a cell edge, the cell inwards: walks start on the grid's edge.
+    const column = Math.floor(u / cellWidth + du * 1e-9);
+    const row = Math.floor(v / cellHeight + dv * 1e-9);
+    if (column < 0 || column >= columns || row < 0 || row >= rows) continue;
+    if (covered(row * columns + column)) return { point: [u, v], steps: k };
+  }
+  return null;
 }
 
 /** How far from `point` along the unit `direction` the stock's edge is. */
