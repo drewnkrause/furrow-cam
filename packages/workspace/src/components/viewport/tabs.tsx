@@ -4,12 +4,14 @@ import {
   closedLoops,
   engraveCut,
   excludeOvercuts,
+  type HoldingTabStrip,
   holdingTabStrips,
   holeSnapTargets,
   modelOutlines,
   nearestHoleSnap,
   nearestOnLoops,
   profileOvercuts,
+  reachPreview,
   snapEdges,
   snapStartPoint,
   startPointCentres,
@@ -19,7 +21,14 @@ import {
   targetedShapes,
   type Vec3,
 } from "@furrow/cam-core";
-import type { DrillOperation, Operation, Point } from "@furrow/document";
+import type {
+  DrillOperation,
+  HoldingTabs as HoldingTabsSettings,
+  Model,
+  Operation,
+  Point,
+  Stock,
+} from "@furrow/document";
 import { Edges } from "@react-three/drei";
 import { type ThreeEvent, useFrame } from "@react-three/fiber";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
@@ -30,6 +39,7 @@ import {
   useDocumentStoreApi,
   useWorkspaceStore,
 } from "../../providers/workspace-stores";
+import { type ModelPreview, previewKey } from "../../stores/model-preview-scheduler";
 import {
   addHole,
   addStartPoint,
@@ -143,10 +153,17 @@ export function Tabs({ color }: { color: string }) {
  * A two-sided project's holding tabs (PRD-0011 B5, ADR-0063), in the top
  * side's coordinates: each a strip from the model's outline to the stock's
  * edge, as wide and thick as the tabs, just below the parting plane, or
- * through the whole stock for full-height ones. In the
+ * through the whole stock for full-height ones, carried on inward to the
+ * model's surface as its preview shows it (#608). In the
  * top view of the top side, dragging one moves it along the outlines.
  */
-export function HoldingTabs({ color }: { color: string }) {
+export function HoldingTabs({
+  color,
+  previews,
+}: {
+  color: string;
+  previews: ReadonlyMap<string, ModelPreview>;
+}) {
   const stock = useDocumentStore((s) => s.document.stock);
   const models = useDocumentStore((s) => s.document.models);
   const editing = useWorkspaceStore(
@@ -156,8 +173,8 @@ export function HoldingTabs({ color }: { color: string }) {
   const loops = useMemo(() => modelOutlines(models), [models]);
   const tabs = stock.twoSided?.tabs;
   const strips = useMemo(
-    () => (tabs ? holdingTabStrips(stock, models, tabs) : []),
-    [stock, models, tabs],
+    () => (tabs ? drawnHoldingTabStrips(stock, models, tabs, previews) : []),
+    [stock, models, tabs, previews],
   );
   if (!stock.twoSided || !tabs) return null;
   // A full-height tab (#606) fills the stock from top to bottom.
@@ -186,6 +203,23 @@ export function HoldingTabs({ color }: { color: string }) {
       />
     </TabMarker>
   ));
+}
+
+/**
+ * The strips of `tabs` as drawn: carried on inward to the model's surface
+ * over its preview, or from its box while the preview is missing (#608).
+ */
+export function drawnHoldingTabStrips(
+  stock: Pick<Stock, "width" | "height">,
+  models: readonly Model[],
+  tabs: Pick<HoldingTabsSettings, "positions" | "width">,
+  previews: ReadonlyMap<string, ModelPreview>,
+): HoldingTabStrip[] {
+  return holdingTabStrips(stock, models, tabs).map((strip) => {
+    const model = models.find(({ id }) => id === strip.modelId);
+    const heightmap = model && previews.get(previewKey(model))?.heightmap;
+    return model && heightmap ? reachPreview(strip, model, heightmap) : strip;
+  });
 }
 
 /**
