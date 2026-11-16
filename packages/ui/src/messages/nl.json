@@ -982,6 +982,7 @@
     "oneWayHint": "Elke baan freest in dezelfde richting, met terugtrekken ertussen.",
     "tabWidth": "Brugbreedte",
     "tabHeight": "Brughoogte",
+    "tabFullHeight": "Volledige hoogte",
     "autoPlace": "Automatisch plaatsen",
     "perContour": "Per contour",
     "bySpacing": "Op afstand",

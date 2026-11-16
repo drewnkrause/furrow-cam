@@ -982,6 +982,7 @@
     "oneWayHint": "Ogni passata taglia nello stesso verso, risalendo tra una e l’altra.",
     "tabWidth": "Larghezza dei ponticelli",
     "tabHeight": "Altezza dei ponticelli",
+    "tabFullHeight": "Altezza piena",
     "autoPlace": "Posizionamento automatico",
     "perContour": "Per contorno",
     "bySpacing": "Per distanza",

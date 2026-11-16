@@ -982,6 +982,7 @@
     "oneWayHint": "Jede Bahn schneidet in dieselbe Richtung und hebt dazwischen ab.",
     "tabWidth": "Stegbreite",
     "tabHeight": "Steghöhe",
+    "tabFullHeight": "Volle Höhe",
     "autoPlace": "Automatisch platzieren",
     "perContour": "Pro Kontur",
     "bySpacing": "Nach Abstand",

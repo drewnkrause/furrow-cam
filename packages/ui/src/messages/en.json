@@ -982,6 +982,7 @@
     "oneWayHint": "Every pass cuts the same way, retracting in between.",
     "tabWidth": "Tab width",
     "tabHeight": "Tab height",
+    "tabFullHeight": "Full height",
     "autoPlace": "Auto place",
     "perContour": "Per contour",
     "bySpacing": "By spacing",

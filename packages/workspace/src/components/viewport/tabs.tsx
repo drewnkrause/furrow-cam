@@ -65,9 +65,10 @@ function useSelectedOperation(): Operation | undefined {
 /**
  * The selected profile's tabs, drawn as the material they leave: a box the
  * tab's width along the contour, the tool's slot across and the tab's height
- * up from the final depth. While the workspace edits them (top view only), a
- * click near one of the profile's contours adds a tab there, dragging a tab
- * moves it along the contours and clicking it removes it.
+ * up from the final depth, or the whole depth for a full-height tab. While
+ * the workspace edits them (top view only), a click near one of the
+ * profile's contours adds a tab there, dragging a tab moves it along the
+ * contours and clicking it removes it.
  */
 export function Tabs({ color }: { color: string }) {
   const selected = useSelectedOperation();
@@ -96,7 +97,7 @@ export function Tabs({ color }: { color: string }) {
   );
   if (!operation || !tabs) return null;
   const { depth } = operation.params;
-  const height = Math.min(tabs.height, depth);
+  const height = tabs.fullHeight ? depth : Math.min(tabs.height, depth);
 
   function add(event: ThreeEvent<MouseEvent>) {
     if (!operation || event.delta > TAB_DRAG_THRESHOLD) return;

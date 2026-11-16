@@ -982,6 +982,7 @@
     "oneWayHint": "Todas las pasadas cortan en el mismo sentido, retirándose entre ellas.",
     "tabWidth": "Ancho del puente",
     "tabHeight": "Altura del puente",
+    "tabFullHeight": "Altura completa",
     "autoPlace": "Colocación automática",
     "perContour": "Por contorno",
     "bySpacing": "Por separación",

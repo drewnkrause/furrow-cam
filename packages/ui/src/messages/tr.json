@@ -982,6 +982,7 @@
     "oneWayHint": "Her paso aynı yönde keser, aralarda geri çekilir.",
     "tabWidth": "Köprü genişliği",
     "tabHeight": "Köprü yüksekliği",
+    "tabFullHeight": "Tam yükseklik",
     "autoPlace": "Otomatik yerleştir",
     "perContour": "Kontur başına",
     "bySpacing": "Aralığa göre",

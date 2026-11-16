@@ -378,6 +378,22 @@ export const migrations: Readonly<Record<number, Migration>> = {
     }
     return doc;
   },
+  // #606: profile tabs can keep the stock's whole thickness. Existing ones keep their height.
+  39: (doc) => {
+    if (Array.isArray(doc.operations)) {
+      for (const operation of doc.operations) {
+        if (
+          isObject(operation) &&
+          operation.type === "profile" &&
+          isObject(operation.params) &&
+          isObject(operation.params.tabs)
+        ) {
+          operation.params.tabs.fullHeight ??= false;
+        }
+      }
+    }
+    return doc;
+  },
 };
 
 /** Thrown when a document can't be upgraded to the current schema version. */

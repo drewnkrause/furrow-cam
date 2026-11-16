@@ -99,6 +99,8 @@ export const ProfileTabs = z.strictObject({
   width: PositiveLength,
   /** Height of the material left, up from the profile's final depth. */
   height: PositiveLength,
+  /** Leave the stock's whole thickness at each tab (#606); `height` is kept but unused. */
+  fullHeight: z.boolean(),
   /** Where the tabs are, in stock coordinates; each goes to the nearest closed contour. */
   positions: z.array(Point),
 });

@@ -982,6 +982,7 @@
     "oneWayHint": "すべてのパスが同じ方向に切削し、間でリトラクトします。",
     "tabWidth": "タブ幅",
     "tabHeight": "タブ高さ",
+    "tabFullHeight": "全高",
     "autoPlace": "自動配置",
     "perContour": "輪郭ごとの数",
     "bySpacing": "間隔指定",

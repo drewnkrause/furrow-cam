@@ -113,7 +113,8 @@ type Cut = Descent & {
  *   where the tool centre stays at or above the tab top for the tab's width
  *   plus the tool diameter: it rises straight up at the tab's edge, crosses it
  *   flat and goes straight back down. Passes above the tab top are untouched,
- *   and no contour starts on a tab.
+ *   and no contour starts on a tab. Over a full-height tab (#606) it stays at
+ *   the entry clearance above the stock top.
  * - Each start point (#426) on a path goes to the contour or open path that
  *   path makes, one per path. A closed contour starts there instead of halfway along its longest
  *   edge, or at the nearer end of a tab it falls on; an open path is cut from
@@ -260,10 +261,13 @@ export function contourToolpath(
 
   const { tabs } = params;
   if (tabs && tabs.positions.length > 0) {
-    if (tabs.height >= params.depth) {
-      warnings.push({ code: "toolpath.tabsTooTall" });
+    if (tabs.fullHeight) {
+      // Off the stock top, so the tool doesn't rub the tab's face.
+      cut.tabTop = Math.min(options.entryClearance, options.safeZ);
+    } else {
+      if (tabs.height >= params.depth) warnings.push({ code: "toolpath.tabsTooTall" });
+      cut.tabTop = Math.min(0, tabs.height - params.depth);
     }
-    cut.tabTop = Math.min(0, tabs.height - params.depth);
     const span = tabs.width + tool.diameter;
     const reach = offset + params.allowance + tabs.width;
     const placed = placeTabs(roughing.contours, tabs.positions, reach, span);

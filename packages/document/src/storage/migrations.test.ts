@@ -424,6 +424,20 @@ describe("migrations", () => {
     });
   });
 
+  it("keeps v39 profile tabs at their height", () => {
+    const current = fullDocument();
+    const [profile] = current.operations;
+    if (profile?.type !== "profile" || !profile.params.tabs)
+      throw new Error("fullDocument has tabs");
+    const { fullHeight: _, ...tabs } = profile.params.tabs;
+    const v39 = {
+      ...current,
+      schemaVersion: 39,
+      operations: [{ ...profile, params: { ...profile.params, tabs } }],
+    };
+    expect(parseProjectDocument(v39)).toEqual(current);
+  });
+
   it("gives v6 documents no models", () => {
     const { models: _, ...v6 } = { ...fullDocument(), schemaVersion: 6 };
     expect(parseProjectDocument(v6)).toEqual(fullDocument());
