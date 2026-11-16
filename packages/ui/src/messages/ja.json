@@ -569,7 +569,7 @@
       "unknownShape": "不明な図形 ID",
       "unknownPath": "不明なパス",
       "pinHolesThrough": "止まり穴のピン穴は素材の内側で終わる必要があります",
-      "tabsThickerThanSide": "保持タブは裏面の深さより薄くする必要があります"
+      "tabsThickerThanSide": "保持タブは部品の周囲を切削する深さより薄くする必要があります"
     },
     "operation": {
       "pathIndices": "パスのインデックスは昇順で、それぞれ 1 回だけにしてください",
@@ -723,7 +723,7 @@
       "holesOffStock": "配置した穴が素材の外にあります。",
       "noHoles": "穴あけするものがありません。ビューポートで穴を配置するか、選択した形状を使用してください。",
       "cutsPins": "この加工は位置決めピンの位置を削るため、素材を裏返したときに工具がピンに当たります。ピンか加工を移動してください。",
-      "noHoldingTabs": "保持タブがありません。裏面で周囲をすべて切削すると、部品が外れます。",
+      "noHoldingTabs": "保持タブがありません。周囲をすべて切り離すと、部品が外れます。",
       "stockBoundaryTwoSided": "両面で素材全体を加工すると、部品を保持する枠が残りません。マージンを使用してください。",
       "reachesOtherModel": "工具が別のモデルに切り込みます。この操作はそのモデルの形状に沿いません（加工するのは自身のモデルだけです）。境界を小さくするか、モデル同士を離してください。"
     },
@@ -1401,11 +1401,11 @@
     "edgesHint": "両面とも、素材のこの角をフェンスの角に押し当てます。両面が一致するのは、素材の {axis} 方向の長さがちょうど {size} の場合だけです。測定してください。",
     "idlePinDrills": "ピンがないため、{count, plural, other {#件のピン穴あけ}}は何も切削しません。",
     "holdingTabs": "保持タブ",
-    "holdingTabsHint": "裏面の加工で分割深さに残す素材の帯で、最後のパスまで部品を保持します。上面図でモデルの外形に沿ってドラッグしてください。",
+    "holdingTabsHint": "3D 加工が各モデルの周囲に残す素材の帯で、素材の底面、または両面加工では分割深さに残し、最後のパスまで部品を保持します。上面図でモデルの外形に沿ってドラッグしてください。",
     "holdingTabWidth": "タブ幅",
     "holdingTabThickness": "タブの厚さ",
     "holdingTabFullHeight": "全高",
-    "holdingTabTooThick": "裏面の深さより薄くする必要があります：{size} 未満",
+    "holdingTabTooThick": "部品の周囲を切削する深さより薄くする必要があります：{size} 未満",
     "holdingTabsPerModel": "モデルごとのタブ数",
     "placeHoldingTabs": "配置",
     "holdingTabCount": "{count, plural, =0 {タブなし} other {#個のタブ}}",

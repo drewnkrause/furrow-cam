@@ -569,7 +569,7 @@
       "unknownShape": "Id de forma desconocido",
       "unknownPath": "Trazado desconocido",
       "pinHolesThrough": "Los agujeros ciegos de los pasadores deben terminar dentro del material",
-      "tabsThickerThanSide": "Los puentes de sujeción deben ser más finos que la profundidad de la cara inferior"
+      "tabsThickerThanSide": "Los puentes de sujeción deben ser más finos que la profundidad que se corta alrededor de la pieza"
     },
     "operation": {
       "pathIndices": "Los índices de trazado deben ser ascendentes y aparecer una vez",
@@ -723,7 +723,7 @@
       "holesOffStock": "Un agujero colocado está fuera del material.",
       "noHoles": "Nada que taladrar: coloca agujeros en la vista o usa las formas seleccionadas.",
       "cutsPins": "Esta operación corta donde va un pasador de referencia, así que la herramienta chocaría con el pasador al dar la vuelta al material: mueve los pasadores o el corte.",
-      "noHoldingTabs": "Sin puentes de sujeción: la pieza se suelta en cuanto la cara inferior corta todo su contorno.",
+      "noHoldingTabs": "Sin puentes de sujeción: la pieza se suelta en cuanto queda cortada todo alrededor.",
       "stockBoundaryTwoSided": "Mecanizar todo el material por ambas caras no deja ningún marco del que cuelgue la pieza: usa un margen.",
       "reachesOtherModel": "La herramienta corta dentro de otro modelo, que esta operación no sigue: solo se mecaniza su propio modelo. Usa un límite más pequeño o separa los modelos."
     },
@@ -1401,11 +1401,11 @@
     "edgesHint": "Apoya esta esquina del material contra una escuadra de tope en ambas caras. Las caras solo coinciden si el material mide exactamente {size} en {axis}: mídelo.",
     "idlePinDrills": "{count, plural, one {# taladrado de los pasadores no corta} other {# taladrados de los pasadores no cortan}} nada sin pasadores.",
     "holdingTabs": "Puentes de sujeción",
-    "holdingTabsHint": "Tiras de material que la cara inferior deja a la profundidad de separación, para que la pieza siga sujeta hasta la última pasada. Arrástralos a lo largo de los contornos de los modelos en la vista superior.",
+    "holdingTabsHint": "Tiras de material que las operaciones 3D dejan alrededor de cada modelo, en el fondo del material o, a dos caras, a la profundidad de separación, para que la pieza siga sujeta hasta la última pasada. Arrástralos a lo largo de los contornos de los modelos en la vista superior.",
     "holdingTabWidth": "Ancho del puente",
     "holdingTabThickness": "Grosor del puente",
     "holdingTabFullHeight": "Altura completa",
-    "holdingTabTooThick": "Debe ser más fino que la profundidad de la cara inferior: menos de {size}",
+    "holdingTabTooThick": "Debe ser más fino que la profundidad que se corta alrededor de la pieza: menos de {size}",
     "holdingTabsPerModel": "Puentes por modelo",
     "placeHoldingTabs": "Colocar",
     "holdingTabCount": "{count, plural, =0 {Sin puentes} one {# puente} other {# puentes}}",
