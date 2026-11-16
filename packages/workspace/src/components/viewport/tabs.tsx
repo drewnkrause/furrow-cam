@@ -75,6 +75,7 @@ export function Tabs({ color }: { color: string }) {
   const operation = selected?.type === "profile" && selected.params.tabs ? selected : null;
   const editing = useWorkspaceStore((s) => s.editing === "tabs");
   const geometry = useDocumentStore((s) => s.document.geometry);
+  const thickness = useDocumentStore((s) => s.document.stock.thickness);
   const store = useDocumentStoreApi();
   const targets = operation?.targets;
   // Only the paths the profile cuts, as its toolpath has them.
@@ -97,7 +98,9 @@ export function Tabs({ color }: { color: string }) {
   );
   if (!operation || !tabs) return null;
   const { depth } = operation.params;
-  const height = tabs.fullHeight ? depth : Math.min(tabs.height, depth);
+  // A full-height tab fills the stock down to the cut, never past its bottom.
+  const height = tabs.fullHeight ? Math.min(depth, thickness) : Math.min(tabs.height, depth);
+  const bottom = tabs.fullHeight ? -height : -depth;
 
   function add(event: ThreeEvent<MouseEvent>) {
     if (!operation || event.delta > TAB_DRAG_THRESHOLD) return;
@@ -121,7 +124,7 @@ export function Tabs({ color }: { color: string }) {
           // biome-ignore lint/suspicious/noArrayIndexKey: see above
           key={index}
           frame={frame ?? { center: tabs.positions[index] as Point, angle: 0 }}
-          z={height / 2 - depth}
+          z={bottom + height / 2}
           editing={editing}
           onMove={(point) => {
             const nearest = nearestOnLoops(loops, point);

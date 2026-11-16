@@ -263,7 +263,7 @@ export function contourToolpath(
   if (tabs && tabs.positions.length > 0) {
     if (tabs.fullHeight) {
       // Off the stock top, so the tool doesn't rub the tab's face.
-      cut.tabTop = Math.min(options.entryClearance, options.safeZ);
+      cut.tabTop = cut.builder.clearance;
     } else {
       if (tabs.height >= params.depth) warnings.push({ code: "toolpath.tabsTooTall" });
       cut.tabTop = Math.min(0, tabs.height - params.depth);
