@@ -593,6 +593,12 @@ export function createServer(projects: Projects = createProjects(), library = li
           .strictObject({
             width: mm("The tabs' width").optional(),
             thickness: mm("The tabs' thickness, less than the bottom side's depth").optional(),
+            fullHeight: z
+              .boolean()
+              .optional()
+              .describe(
+                "true: the tabs keep the stock's whole thickness, which neither side cuts.",
+              ),
             count: z.number().int().min(1).optional().describe("Tabs spread round each model."),
             positions: z
               .array(z.tuple([z.number(), z.number()]))

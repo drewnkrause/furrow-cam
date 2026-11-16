@@ -123,11 +123,14 @@ export type LineUp = z.infer<typeof LineUp>;
  * 3D operations leave between the part and the stock around it, so the part
  * stays held until the last pass. Each is `width` wide, from the model's
  * outline out to the stock's edge, and `thickness` thick just below the
- * parting plane, on the bottom side.
+ * parting plane, on the bottom side; or, `fullHeight` (#606), the stock's
+ * whole thickness, which neither side cuts.
  */
 export const HoldingTabs = z.strictObject({
   width: PositiveLength,
+  /** Kept but unused while `fullHeight`. */
   thickness: PositiveLength,
+  fullHeight: z.boolean(),
   /** Where the tabs are, in the top side's stock coordinates; each goes to the nearest model's outline. */
   positions: z.array(Point),
 });

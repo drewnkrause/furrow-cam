@@ -139,7 +139,8 @@ export function Tabs({ color }: { color: string }) {
 /**
  * A two-sided project's holding tabs (PRD-0011 B5, ADR-0063), in the top
  * side's coordinates: each a strip from the model's outline to the stock's
- * edge, as wide and thick as the tabs, just below the parting plane. In the
+ * edge, as wide and thick as the tabs, just below the parting plane, or
+ * through the whole stock for full-height ones. In the
  * top view of the top side, dragging one moves it along the outlines.
  */
 export function HoldingTabs({ color }: { color: string }) {
@@ -156,7 +157,9 @@ export function HoldingTabs({ color }: { color: string }) {
     [stock, models, tabs],
   );
   if (!stock.twoSided || !tabs) return null;
-  const { partingDepth } = stock.twoSided;
+  // A full-height tab (#606) fills the stock from top to bottom.
+  const thickness = tabs.fullHeight ? stock.thickness : tabs.thickness;
+  const top = tabs.fullHeight ? 0 : -stock.twoSided.partingDepth;
 
   return strips.map(({ at, to }, index) => (
     <TabMarker
@@ -167,7 +170,7 @@ export function HoldingTabs({ color }: { color: string }) {
         center: [(at[0] + to[0]) / 2, (at[1] + to[1]) / 2],
         angle: Math.atan2(to[1] - at[1], to[0] - at[0]),
       }}
-      z={-partingDepth - tabs.thickness / 2}
+      z={top - thickness / 2}
       editing={editing}
       onMove={(point) => {
         const nearest = nearestOnLoops(loops, point);
@@ -175,7 +178,7 @@ export function HoldingTabs({ color }: { color: string }) {
       }}
     >
       <TabBox
-        size={[Math.hypot(to[0] - at[0], to[1] - at[1]), tabs.width, tabs.thickness]}
+        size={[Math.hypot(to[0] - at[0], to[1] - at[1]), tabs.width, thickness]}
         color={color}
       />
     </TabMarker>

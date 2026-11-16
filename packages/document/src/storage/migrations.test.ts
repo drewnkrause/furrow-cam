@@ -424,15 +424,18 @@ describe("migrations", () => {
     });
   });
 
-  it("keeps v39 profile tabs at their height", () => {
+  it("keeps v39 profile and holding tabs at their height", () => {
     const current = fullDocument();
     const [profile] = current.operations;
-    if (profile?.type !== "profile" || !profile.params.tabs)
+    const { twoSided } = current.stock;
+    if (profile?.type !== "profile" || !profile.params.tabs || !twoSided?.tabs)
       throw new Error("fullDocument has tabs");
     const { fullHeight: _, ...tabs } = profile.params.tabs;
+    const { fullHeight: __, ...holding } = twoSided.tabs;
     const v39 = {
       ...current,
       schemaVersion: 39,
+      stock: { ...current.stock, twoSided: { ...twoSided, tabs: holding } },
       operations: [{ ...profile, params: { ...profile.params, tabs } }],
     };
     expect(parseProjectDocument(v39)).toEqual(current);

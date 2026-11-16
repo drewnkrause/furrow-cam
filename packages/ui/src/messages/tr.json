@@ -1404,6 +1404,7 @@
     "holdingTabsHint": "Alt yüzün ayırma derinliğinde bıraktığı ham malzeme şeritleri; böylece parça son pasoya kadar tutulur. Üst görünümde bunları modellerin dış hatları boyunca sürükleyin.",
     "holdingTabWidth": "Köprü genişliği",
     "holdingTabThickness": "Köprü kalınlığı",
+    "holdingTabFullHeight": "Tam yükseklik",
     "holdingTabTooThick": "Alt yüzün derinliğinden ince olmalıdır: {size} değerinden az",
     "holdingTabsPerModel": "Model başına köprü",
     "placeHoldingTabs": "Yerleştir",

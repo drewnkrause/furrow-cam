@@ -6,4 +6,4 @@
 "@furrow/mcp": minor
 ---
 
-Profile tabs can be full height: they keep the stock's whole thickness, whatever the depth, and the tool lifts just clear of the stock top to cross them.
+Profile tabs and two-sided holding tabs can be full height: they keep the stock's whole thickness, which no pass cuts, whatever the depth.

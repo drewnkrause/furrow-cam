@@ -1404,6 +1404,7 @@
     "holdingTabsHint": "Strisce di grezzo che il lato inferiore lascia alla profondità di separazione, così il pezzo resta fermo fino all'ultima passata. Trascinali lungo i contorni dei modelli nella vista dall'alto.",
     "holdingTabWidth": "Larghezza ponticelli",
     "holdingTabThickness": "Spessore ponticelli",
+    "holdingTabFullHeight": "Altezza piena",
     "holdingTabTooThick": "Deve essere più sottile della profondità del lato inferiore: meno di {size}",
     "holdingTabsPerModel": "Ponticelli per modello",
     "placeHoldingTabs": "Posiziona",

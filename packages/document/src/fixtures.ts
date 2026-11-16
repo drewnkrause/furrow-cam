@@ -280,7 +280,7 @@ export function fullDocument(): ProjectDocument {
           positions: [-120, 120],
           holes: { type: "through", spoilboardDepth: 5 },
         },
-        tabs: { width: 6, thickness: 2, positions: [[0, 50]] },
+        tabs: { width: 6, thickness: 2, fullHeight: false, positions: [[0, 50]] },
       },
     },
     machine,
