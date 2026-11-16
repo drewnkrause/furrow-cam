@@ -568,7 +568,12 @@ describe("profileToolpath", () => {
 
 describe("profileToolpath with tabs", () => {
   /** 4 mm wide, 3 mm tall: over a 6 mm tool the centre stays up for 10 mm. */
-  const tabs = (positions: [number, number][]) => ({ width: 4, height: 3, positions });
+  const tabs = (positions: [number, number][]) => ({
+    width: 4,
+    height: 3,
+    fullHeight: false,
+    positions,
+  });
   const midSides: [number, number][] = [
     [50, 0],
     [100, 50],
@@ -612,6 +617,18 @@ describe("profileToolpath with tabs", () => {
     // Everywhere else the contour is still cut to full depth.
     expect(cutsAt(toolpath, -6).length).toBeGreaterThan(3);
     expect(toolpath.warnings).toEqual([]);
+  });
+
+  it("leaves full-height tabs uncut, clearing the stock top over them (#606)", () => {
+    const full = { ...tabs([[50, 0]]), height: 6, fullHeight: true };
+    for (const extra of [{}, { ramp: true }, { allowance: 0.5, finishPass: true }]) {
+      const toolpath = profile({ ...extra, tabs: full });
+      expect(intrusions(toolpath, 1, 5, [[50, -3]])).toEqual([]);
+      expect(cutsAt(toolpath, 1).length).toBeGreaterThan(1);
+      expect(toolpath.warnings).toEqual([]);
+    }
+    // Deeper cuts keep the tab whole: nothing depends on its height.
+    expect(intrusions(profile({ depth: 12, tabs: full }), 1, 5, [[50, -3]])).toEqual([]);
   });
 
   it("goes straight up and down at the tab's edges", () => {
@@ -700,7 +717,9 @@ describe("profileToolpath with tabs", () => {
     // Near enough to the depth passes (3.5 mm out) but not to the finish lap (3 mm out).
     const finishing = profile({ allowance: 0.5, finishPass: true, tabs: tabs([[50, -10.5]]) });
     expect(finishing.warnings).toEqual([{ code: "toolpath.tabsLeftOut", values: { count: 1 } }]);
-    const tall = profile({ tabs: { width: 4, height: 6, positions: [[50, 0]] } });
+    const tall = profile({
+      tabs: { width: 4, height: 6, fullHeight: false, positions: [[50, 0]] },
+    });
     expect(tall.warnings).toEqual([{ code: "toolpath.tabsTooTall" }]);
     expect(Math.max(...tall.moves.filter((m) => m.kind === "feed").map((m) => m.to[2]))).toBe(0);
   });
@@ -757,7 +776,12 @@ describe("profileToolpath with start points", () => {
   });
 
   it("moves a start point on a tab to the nearer end of the tab", () => {
-    const tabs = { width: 4, height: 3, positions: [[0, 50]] as [number, number][] };
+    const tabs = {
+      width: 4,
+      height: 3,
+      fullHeight: false,
+      positions: [[0, 50]] as [number, number][],
+    };
     const toolpath = profile({ tabs, startPoints: starts([0, 52]) });
     // Outside, climbing, the left side is cut upwards; the tab spans 45 to 55 there.
     expect(entry(toolpath)?.[0]).toBeCloseTo(-3, 6);
@@ -1060,7 +1084,12 @@ describe("profileToolpath with corner overcuts", () => {
   });
 
   it("keeps tabs where they are, and the tool at the tab top over an overcut a tab covers", () => {
-    const tabs = (positions: [number, number][]) => ({ width: 4, height: 3, positions });
+    const tabs = (positions: [number, number][]) => ({
+      width: 4,
+      height: 3,
+      fullHeight: false,
+      positions,
+    });
     const midSides: [number, number][] = [
       [50, 0],
       [100, 50],

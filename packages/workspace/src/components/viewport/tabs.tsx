@@ -65,15 +65,17 @@ function useSelectedOperation(): Operation | undefined {
 /**
  * The selected profile's tabs, drawn as the material they leave: a box the
  * tab's width along the contour, the tool's slot across and the tab's height
- * up from the final depth. While the workspace edits them (top view only), a
- * click near one of the profile's contours adds a tab there, dragging a tab
- * moves it along the contours and clicking it removes it.
+ * up from the final depth, or the whole depth for a full-height tab. While
+ * the workspace edits them (top view only), a click near one of the
+ * profile's contours adds a tab there, dragging a tab moves it along the
+ * contours and clicking it removes it.
  */
 export function Tabs({ color }: { color: string }) {
   const selected = useSelectedOperation();
   const operation = selected?.type === "profile" && selected.params.tabs ? selected : null;
   const editing = useWorkspaceStore((s) => s.editing === "tabs");
   const geometry = useDocumentStore((s) => s.document.geometry);
+  const thickness = useDocumentStore((s) => s.document.stock.thickness);
   const store = useDocumentStoreApi();
   const targets = operation?.targets;
   // Only the paths the profile cuts, as its toolpath has them.
@@ -96,7 +98,9 @@ export function Tabs({ color }: { color: string }) {
   );
   if (!operation || !tabs) return null;
   const { depth } = operation.params;
-  const height = Math.min(tabs.height, depth);
+  // A full-height tab fills the stock down to the cut, never past its bottom.
+  const height = tabs.fullHeight ? Math.min(depth, thickness) : Math.min(tabs.height, depth);
+  const bottom = tabs.fullHeight ? -height : -depth;
 
   function add(event: ThreeEvent<MouseEvent>) {
     if (!operation || event.delta > TAB_DRAG_THRESHOLD) return;
@@ -120,7 +124,7 @@ export function Tabs({ color }: { color: string }) {
           // biome-ignore lint/suspicious/noArrayIndexKey: see above
           key={index}
           frame={frame ?? { center: tabs.positions[index] as Point, angle: 0 }}
-          z={height / 2 - depth}
+          z={bottom + height / 2}
           editing={editing}
           onMove={(point) => {
             const nearest = nearestOnLoops(loops, point);
@@ -138,7 +142,8 @@ export function Tabs({ color }: { color: string }) {
 /**
  * A two-sided project's holding tabs (PRD-0011 B5, ADR-0063), in the top
  * side's coordinates: each a strip from the model's outline to the stock's
- * edge, as wide and thick as the tabs, just below the parting plane. In the
+ * edge, as wide and thick as the tabs, just below the parting plane, or
+ * through the whole stock for full-height ones. In the
  * top view of the top side, dragging one moves it along the outlines.
  */
 export function HoldingTabs({ color }: { color: string }) {
@@ -155,7 +160,9 @@ export function HoldingTabs({ color }: { color: string }) {
     [stock, models, tabs],
   );
   if (!stock.twoSided || !tabs) return null;
-  const { partingDepth } = stock.twoSided;
+  // A full-height tab (#606) fills the stock from top to bottom.
+  const thickness = tabs.fullHeight ? stock.thickness : tabs.thickness;
+  const top = tabs.fullHeight ? 0 : -stock.twoSided.partingDepth;
 
   return strips.map(({ at, to }, index) => (
     <TabMarker
@@ -166,7 +173,7 @@ export function HoldingTabs({ color }: { color: string }) {
         center: [(at[0] + to[0]) / 2, (at[1] + to[1]) / 2],
         angle: Math.atan2(to[1] - at[1], to[0] - at[0]),
       }}
-      z={-partingDepth - tabs.thickness / 2}
+      z={top - thickness / 2}
       editing={editing}
       onMove={(point) => {
         const nearest = nearestOnLoops(loops, point);
@@ -174,7 +181,7 @@ export function HoldingTabs({ color }: { color: string }) {
       }}
     >
       <TabBox
-        size={[Math.hypot(to[0] - at[0], to[1] - at[1]), tabs.width, tabs.thickness]}
+        size={[Math.hypot(to[0] - at[0], to[1] - at[1]), tabs.width, thickness]}
         color={color}
       />
     </TabMarker>
