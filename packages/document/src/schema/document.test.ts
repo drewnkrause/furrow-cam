@@ -317,22 +317,22 @@ describe("Stock", () => {
 
 describe("two-sided projects", () => {
   it("cut each side down to a parting plane inside the stock", () => {
-    const stock = fullDocument().stock;
+    const stock = { ...fullDocument().stock, tabs: null };
     expect(
       Stock.safeParse({
         ...stock,
-        twoSided: { flipAxis: "y", partingDepth: 17.9, tabs: null, lineUp: null },
+        twoSided: { flipAxis: "y", partingDepth: 17.9, lineUp: null },
       }).success,
     ).toBe(true);
     for (const twoSided of [
-      { flipAxis: "x", partingDepth: 18, tabs: null, lineUp: null },
-      { flipAxis: "x", partingDepth: 0, tabs: null, lineUp: null },
-      { flipAxis: "z", partingDepth: 9, tabs: null, lineUp: null },
-      { flipAxis: "x", tabs: null, lineUp: null },
+      { flipAxis: "x", partingDepth: 18, lineUp: null },
+      { flipAxis: "x", partingDepth: 0, lineUp: null },
+      { flipAxis: "z", partingDepth: 9, lineUp: null },
+      { flipAxis: "x", lineUp: null },
     ]) {
       expect(Stock.safeParse({ ...stock, twoSided }).success).toBe(false);
     }
-    const below = { flipAxis: "x", partingDepth: 20, tabs: null, lineUp: null };
+    const below = { flipAxis: "x", partingDepth: 20, lineUp: null };
     expect(Stock.safeParse({ ...stock, twoSided: below }).error?.issues).toEqual([
       expect.objectContaining({ path: ["twoSided", "partingDepth"] }),
     ]);
@@ -340,22 +340,21 @@ describe("two-sided projects", () => {
 
   it("hold the part by tabs thinner than the bottom side's depth", () => {
     const { stock } = fullDocument();
-    const withTabs = (thickness: number) => ({
+    const withTabs = (thickness: number, twoSided: object | null = stock.twoSided) => ({
       ...stock,
-      twoSided: {
-        flipAxis: "x",
-        partingDepth: 9,
-        lineUp: null,
-        tabs: { width: 6, thickness, fullHeight: false, positions: [[0, 50]] },
-      },
+      twoSided,
+      tabs: { width: 6, thickness, fullHeight: false, positions: [[0, 50]] },
     });
     expect(Stock.safeParse(withTabs(8.9)).success).toBe(true);
     expect(Stock.safeParse(withTabs(9)).error?.issues).toEqual([
       expect.objectContaining({
-        path: ["twoSided", "tabs", "thickness"],
+        path: ["tabs", "thickness"],
         message: "document.tabsThickerThanSide",
       }),
     ]);
+    // One-sided (#616): thinner than the stock.
+    expect(Stock.safeParse(withTabs(17.9, null)).success).toBe(true);
+    expect(Stock.safeParse(withTabs(18, null)).success).toBe(false);
   });
 
   it("locate the turned-over stock on two pins or more, through or blind", () => {
@@ -363,7 +362,7 @@ describe("two-sided projects", () => {
     const pins = stock.twoSided?.lineUp;
     const withPins = (changes: object) => ({
       ...stock,
-      twoSided: { flipAxis: "x", partingDepth: 9, tabs: null, lineUp: { ...pins, ...changes } },
+      twoSided: { flipAxis: "x", partingDepth: 9, lineUp: { ...pins, ...changes } },
     });
     expect(Stock.safeParse(withPins({ holes: { type: "blind", depth: 8 } })).success).toBe(true);
     for (const changes of [
@@ -442,6 +441,7 @@ describe("createProjectDocument", () => {
         zOrigin: "stock_top",
         touchOff: null,
         twoSided: null,
+        tabs: null,
       },
       machine: null,
       geometry: [],

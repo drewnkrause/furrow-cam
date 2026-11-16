@@ -6,7 +6,7 @@ import { Model, Sha256 } from "./model";
 import { Operation, operationModelId } from "./operation";
 import { PositiveLength, Units } from "./units";
 
-export const CURRENT_SCHEMA_VERSION = 40;
+export const CURRENT_SCHEMA_VERSION = 41;
 
 /** The 9 stock points an XY zero can sit on: corners, edge midpoints and the centre. */
 export const StockAnchor = z.enum([
@@ -119,12 +119,13 @@ export const LineUp = z.discriminatedUnion("type", [LocatingPins, FenceCorner]);
 export type LineUp = z.infer<typeof LineUp>;
 
 /**
- * Holding tabs (PRD-0011 B5, ADR-0063): strips of material the bottom side's
- * 3D operations leave between the part and the stock around it, so the part
+ * Holding tabs (PRD-0011 B5, ADR-0063, ADR-0086): strips of material the 3D
+ * operations leave between the part and the stock around it, so the part
  * stays held until the last pass. Each is `width` wide, from the model's
- * outline out to the stock's edge, and `thickness` thick just below the
- * parting plane, on the bottom side; or, `fullHeight` (#606), the stock's
- * whole thickness, which neither side cuts.
+ * outline out to the stock's edge, and `thickness` thick: up from the stock
+ * bottom in a one-sided project, just below the parting plane on the bottom
+ * side of a two-sided one; or, `fullHeight` (#606), the stock's whole
+ * thickness, which no operation cuts.
  */
 export const HoldingTabs = z.strictObject({
   width: PositiveLength,
@@ -149,14 +150,27 @@ export const TwoSided = z.strictObject({
   partingDepth: PositiveLength,
   /** How the turned-over stock is lined up, or `null` for turning it over in place by eye. */
   lineUp: LineUp.nullable(),
-  /** The holding tabs, or `null` for none. */
-  tabs: HoldingTabs.nullable(),
 });
 export type TwoSided = z.infer<typeof TwoSided>;
 
 /** The stock's locating pins (#356), or `null` unless it is lined up on them. */
 export function stockPins({ twoSided }: { twoSided: TwoSided | null }): LocatingPins | null {
   return twoSided?.lineUp?.type === "pins" ? twoSided.lineUp : null;
+}
+
+/**
+ * How deep the cut that holding tabs stand in is, which they must be thinner
+ * than: the stock's thickness, or a two-sided project's bottom side, up to
+ * the parting plane.
+ */
+export function holdingTabsDepth({
+  thickness,
+  twoSided,
+}: {
+  thickness: number;
+  twoSided: Pick<TwoSided, "partingDepth"> | null;
+}): number {
+  return thickness - (twoSided?.partingDepth ?? 0);
 }
 
 export const Stock = z
@@ -170,6 +184,8 @@ export const Stock = z
     touchOff: TouchOff.nullable(),
     /** The two-sided setup, or `null` for a project cut from the top only. */
     twoSided: TwoSided.nullable(),
+    /** The holding tabs the 3D operations leave, or `null` for none. */
+    tabs: HoldingTabs.nullable(),
   })
   .superRefine((stock, ctx) => {
     if (stock.twoSided && stock.twoSided.partingDepth >= stock.thickness) {
@@ -179,11 +195,10 @@ export const Stock = z
         message: "document.partingBelowStock",
       });
     }
-    const tabs = stock.twoSided?.tabs;
-    if (stock.twoSided && tabs && tabs.thickness >= stock.thickness - stock.twoSided.partingDepth) {
+    if (stock.tabs && stock.tabs.thickness >= holdingTabsDepth(stock)) {
       ctx.addIssue({
         code: "custom",
-        path: ["twoSided", "tabs", "thickness"],
+        path: ["tabs", "thickness"],
         message: "document.tabsThickerThanSide",
       });
     }
@@ -396,6 +411,7 @@ export function createProjectDocument(): ProjectDocument {
       zOrigin: "stock_top",
       touchOff: null,
       twoSided: null,
+      tabs: null,
     },
     machine: null,
     machineId: null,

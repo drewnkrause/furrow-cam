@@ -569,7 +569,7 @@
       "unknownShape": "Identifiant de forme inconnu",
       "unknownPath": "Tracé inconnu",
       "pinHolesThrough": "Les trous borgnes des pions doivent s'arrêter dans le brut",
-      "tabsThickerThanSide": "Les attaches doivent être plus fines que la profondeur de la face du dessous"
+      "tabsThickerThanSide": "Les attaches doivent être plus fines que la profondeur coupée autour de la pièce"
     },
     "operation": {
       "pathIndices": "Les indices de tracé doivent être croissants, chacun une fois",
@@ -723,7 +723,7 @@
       "holesOffStock": "Un trou placé est hors du brut.",
       "noHoles": "Rien à percer : placez des trous dans la vue ou utilisez les formes sélectionnées.",
       "cutsPins": "Cette opération coupe là où va un pion de centrage, donc l'outil toucherait le pion une fois le brut retourné : déplacez les pions ou la coupe.",
-      "noHoldingTabs": "Pas d'attaches : la pièce se détache dès que la face du dessous coupe tout autour.",
+      "noHoldingTabs": "Pas d'attaches : la pièce se détache dès qu'elle est découpée tout autour.",
       "stockBoundaryTwoSided": "Usiner tout le brut des deux côtés ne laisse aucun cadre où la pièce reste attachée : utilisez une marge.",
       "reachesOtherModel": "L’outil entame un autre modèle, que cette opération ne suit pas : seul son propre modèle est usiné. Utilisez une limite plus petite ou éloignez les modèles."
     },
@@ -1403,11 +1403,11 @@
     "edgesHint": "Poussez ce coin du brut dans un coin de butée pour les deux faces. Les faces ne se rejoignent que si le brut fait exactement {size} selon {axis} : mesurez-le.",
     "idlePinDrills": "{count, plural, one {# perçage des pions ne perce} other {# perçages des pions ne percent}} rien sans pions.",
     "holdingTabs": "Attaches",
-    "holdingTabsHint": "Bandes de brut que la face du dessous laisse à la profondeur de séparation, pour que la pièce tienne jusqu'à la dernière passe. Faites-les glisser le long des contours des modèles en vue de dessus.",
+    "holdingTabsHint": "Bandes de brut que les opérations 3D laissent autour de chaque modèle, au fond du brut ou, en double face, à la profondeur de séparation, pour que la pièce tienne jusqu'à la dernière passe. Faites-les glisser le long des contours des modèles en vue de dessus.",
     "holdingTabWidth": "Largeur des attaches",
     "holdingTabThickness": "Épaisseur des attaches",
     "holdingTabFullHeight": "Pleine hauteur",
-    "holdingTabTooThick": "Doit être plus fine que la profondeur de la face du dessous : moins de {size}",
+    "holdingTabTooThick": "Doit être plus fine que la profondeur coupée autour de la pièce : moins de {size}",
     "holdingTabsPerModel": "Attaches par modèle",
     "placeHoldingTabs": "Placer",
     "holdingTabCount": "{count, plural, =0 {Aucune attache} one {# attache} other {# attaches}}",

@@ -569,7 +569,7 @@
       "unknownShape": "Unbekannte Form-ID",
       "unknownPath": "Unbekannter Pfad",
       "pinHolesThrough": "Sacklöcher für die Stifte müssen im Rohteil enden",
-      "tabsThickerThanSide": "Haltestege müssen dünner sein als die Tiefe der Unterseite"
+      "tabsThickerThanSide": "Haltestege müssen dünner sein als die Tiefe, die um das Teil geschnitten wird"
     },
     "operation": {
       "pathIndices": "Pfadindizes müssen aufsteigend sein, jeder einmal",
@@ -723,7 +723,7 @@
       "holesOffStock": "Eine gesetzte Bohrung liegt außerhalb des Rohteils.",
       "noHoles": "Nichts zu bohren: Bohrungen im Ansichtsfenster setzen oder ausgewählte Formen verwenden.",
       "cutsPins": "Diese Operation schneidet dort, wo ein Passstift sitzt, daher würde das Werkzeug den Stift treffen, wenn das Rohteil gewendet ist: Verschiebe die Stifte oder den Schnitt.",
-      "noHoldingTabs": "Keine Haltestege: Das Teil löst sich, sobald die Unterseite rundherum schneidet.",
+      "noHoldingTabs": "Keine Haltestege: Das Teil löst sich, sobald es rundherum freigeschnitten ist.",
       "stockBoundaryTwoSided": "Wird auf beiden Seiten das ganze Rohteil bearbeitet, bleibt kein Rahmen, an dem das Teil hält: Arbeite mit einem Rand.",
       "reachesOtherModel": "Das Werkzeug schneidet in ein anderes Modell, dem diese Operation nicht folgt: Nur ihr eigenes Modell wird bearbeitet. Verwende eine kleinere Begrenzung oder rücke die Modelle auseinander."
     },
@@ -1403,11 +1403,11 @@
     "edgesHint": "Schieben Sie diese Ecke des Rohteils für beide Seiten in eine Anschlagecke. Die Seiten treffen sich nur, wenn das Rohteil entlang {axis} genau {size} misst: messen Sie es nach.",
     "idlePinDrills": "{count, plural, one {# Bohrung der Stifte bohrt} other {# Bohrungen der Stifte bohren}} ohne Stifte nichts.",
     "holdingTabs": "Haltestege",
-    "holdingTabsHint": "Streifen des Rohteils, die die Unterseite auf der Trenntiefe stehen lässt, damit das Teil bis zum letzten Durchgang hält. In der Draufsicht entlang der Modellumrisse ziehen.",
+    "holdingTabsHint": "Streifen des Rohteils, die die 3D-Operationen um jedes Modell stehen lassen, auf dem Boden des Rohteils oder, beidseitig, auf der Trenntiefe, damit das Teil bis zum letzten Durchgang hält. In der Draufsicht entlang der Modellumrisse ziehen.",
     "holdingTabWidth": "Stegbreite",
     "holdingTabThickness": "Stegdicke",
     "holdingTabFullHeight": "Volle Höhe",
-    "holdingTabTooThick": "Muss dünner sein als die Tiefe der Unterseite: weniger als {size}",
+    "holdingTabTooThick": "Muss dünner sein als die Tiefe, die um das Teil geschnitten wird: weniger als {size}",
     "holdingTabsPerModel": "Stege pro Modell",
     "placeHoldingTabs": "Verteilen",
     "holdingTabCount": "{count, plural, =0 {Keine Stege} one {# Steg} other {# Stege}}",
