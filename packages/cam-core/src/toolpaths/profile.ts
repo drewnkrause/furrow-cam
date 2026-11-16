@@ -59,7 +59,7 @@ export type ProfileOptions = {
  * where a start point put it, `plunge` where the tool goes down when that
  * start point has a plunge point.
  */
-type Contour = {
+export type Contour = {
   ring: Point[];
   wasteLeft: boolean;
   area: number;
@@ -69,7 +69,7 @@ type Contour = {
 };
 
 /** An open path the tool follows on the line, cut one way when a start point picked its end. */
-type OpenPath = { path: Point[]; oneWay: boolean };
+export type OpenPath = { path: Point[]; oneWay: boolean };
 
 /** The contours of one offset, and where the tool centre may go without cutting the part. */
 type Contours = { contours: Contour[]; isFree: (point: Point) => boolean };
@@ -311,14 +311,17 @@ export function contourToolpath(
   }
 
   // Open paths never free the part, so they go before any closed contour.
-  if (params.side === "on") {
-    for (const { path, oneWay } of open) cutOpenPath(cut, path, levels, oneWay);
+  if (params.side === "on" && open.length > 0) {
+    for (const { path, oneWay } of orderOpenPaths(open, [0, 0])) {
+      cutOpenPath(cut, path, levels, oneWay);
+    }
   }
 
   // A finish lap follows the depth passes it enters from, so inner contours
   // are finished before the outline frees the part.
-  const jobs = roughing.contours.map((contour) => ({
+  const jobs: ProfileJob[] = roughing.contours.map((contour) => ({
     area: contour.area,
+    contour,
     run: () => cutContour(cut, contour, levels, roughing.isFree),
   }));
   if (finishing) {
@@ -363,13 +366,16 @@ export function contourToolpath(
       } else {
         jobs.push({
           area: contour.area,
+          contour,
           run: () => cutContour(cut, contour, levels, finishing.isFree),
         });
       }
     }
   }
-  jobs.sort((a, b) => a.area - b.area);
-  for (const job of jobs) job.run();
+  const at: Point = cut.builder.position
+    ? [cut.builder.position[0], cut.builder.position[1]]
+    : [0, 0];
+  for (const job of orderProfileJobs(jobs, at, cut.leadInRadius !== null)) job.run();
   cut.builder.retract();
 
   if (cut.leadInMisfits > 0) {
@@ -394,6 +400,354 @@ export function profileOvercuts(
   const closed = closedLoops(shapes, tolerance).map((loop) => loop.slice(0, -1));
   const { contours: found } = contours(closed, { side, direction: "climb" }, radius);
   return findOvercuts(found, radius, drawnCorners(shapes, maxAngle), tolerance);
+}
+
+/**
+ * A job cutting a closed contour in `profileToolpath`, its area used to cut
+ * inner contours before the outline that frees the part.
+ */
+export type ProfileJob = {
+  area: number;
+  contour: Contour;
+  run: () => void;
+};
+
+/**
+ * Whether `ring` forms a circle or circular hole (within chord and geometry tolerance).
+ */
+export function isContourCircle(ring: Point[]): boolean {
+  if (ring.length < 5) return false;
+  const b = bounds(ring);
+  const w = b.maxX - b.minX;
+  const h = b.maxY - b.minY;
+  const size = Math.max(w, h);
+  if (size <= 1e-6) return false;
+  if (Math.abs(w - h) > 0.05 * size + 0.1) return false;
+  const cx = (b.minX + b.maxX) / 2;
+  const cy = (b.minY + b.maxY) / 2;
+  const r = (w + h) / 4;
+  for (const [x, y] of ring) {
+    const d = Math.hypot(x - cx, y - cy);
+    if (Math.abs(d - r) > 0.05 * r + 0.1) return false;
+  }
+  return true;
+}
+
+/**
+ * Whether `contour` can rotate its start/entry point to face the incoming rapid travel.
+ * Explicit user start points (#426), plunge points (#427), and contours with tabs
+ * have fixed positions and are never rotated. When lead-in is enabled, circles rotate
+ * freely while non-circular contours stay on their longest straight edge to avoid misfits.
+ */
+export function isContourRotatable(contour: Contour, hasLeadIn = false): boolean {
+  if (
+    contour.startPoint ||
+    contour.plunge !== null ||
+    contour.tabs.length > 0 ||
+    contour.ring.length < 3
+  ) {
+    return false;
+  }
+  return !hasLeadIn;
+}
+
+/**
+ * The entry point for `contour` when arriving from `from`.
+ * For closed rotatable contours/circles, returns whichever point on the path
+ * is closest to `from`.
+ */
+export function contourEntry(contour: Contour, from: Point, hasLeadIn = false): Point {
+  if (contour.plunge) return contour.plunge;
+  if (!isContourRotatable(contour, hasLeadIn)) return contour.ring[0] as Point;
+  const { ring } = contour;
+  let bestPoint = ring[0] as Point;
+  let bestDist = Infinity;
+  for (const p of ring) {
+    const dx = p[0] - from[0];
+    const dy = p[1] - from[1];
+    const d = dx * dx + dy * dy;
+    if (d < bestDist) {
+      bestDist = d;
+      bestPoint = p;
+    }
+  }
+  return bestPoint;
+}
+
+/**
+ * Rotates `contour.ring` in-place so its start/entry point is the point on the path
+ * closest to `from`.
+ */
+export function rotateContour(contour: Contour, from: Point, hasLeadIn = false): void {
+  if (!isContourRotatable(contour, hasLeadIn)) return;
+  const { ring } = contour;
+  let bestIndex = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < ring.length; i++) {
+    const p = ring[i] as Point;
+    const dx = p[0] - from[0];
+    const dy = p[1] - from[1];
+    const d = dx * dx + dy * dy;
+    if (d < bestDist) {
+      bestDist = d;
+      bestIndex = i;
+    }
+  }
+  if (bestIndex > 0) {
+    contour.ring = [...ring.slice(bestIndex), ...ring.slice(0, bestIndex)];
+  }
+}
+
+/**
+ * Orders profile contour jobs:
+ * 1. An inner contour must be cut before any outer contour that contains it,
+ *    so inner cuts come before the outline that frees the part.
+ * 2. Multi-start Nearest-Neighbor tries every valid starting contour (those with no
+ *    un-cut children), factoring in initial rapid travel from `start` (or `[0, 0]`),
+ *    rotating closed contour entry points to the closest point to the previous cut.
+ * 3. A 2-Opt pass (subsegment reversal) and Or-Opt pass (single-node relocation)
+ *    run iteratively until no valid move reduces total rapid travel distance.
+ * 4. Finally, closed contour start points are rotated in-place to face their incoming
+ *    rapid travel move.
+ */
+export function orderProfileJobs<T extends { area: number; contour: Contour }>(
+  jobs: T[],
+  start: Point = [0, 0],
+  hasLeadIn = false,
+): T[] {
+  if (jobs.length <= 1) return [...jobs];
+
+  const N = jobs.length;
+  const boxes = jobs.map(({ contour }) => bounds(contour.ring));
+
+  // Containment DAG: inside[i] is the set of jobs strictly inside job i.
+  // A child contour j must be cut before its enclosing parent contour i.
+  const inside = jobs.map((a, i) => {
+    const box = boxes[i] as Box;
+    const children = new Set<number>();
+    jobs.forEach((b, j) => {
+      if (i !== j && b.area < a.area - 1e-6) {
+        const point = b.contour.ring[0] as Point;
+        if (inBox(point, box, 0) && containment(point, a.contour.ring) === "inside") {
+          children.add(j);
+        }
+      }
+    });
+    return children;
+  });
+
+  // Rapid travel distance for a tour, dynamically rotating each rotatable contour to face the cut before it.
+  function evaluateTour(tour: number[]): { distance: number; entries: Point[] } {
+    let current = start;
+    let totalDist = 0;
+    const entries: Point[] = new Array(tour.length);
+    for (let k = 0; k < tour.length; k++) {
+      const idx = tour[k] as number;
+      const entry = contourEntry((jobs[idx] as T).contour, current, hasLeadIn);
+      entries[k] = entry;
+      totalDist += distance(current, entry);
+      current = entry;
+    }
+    return { distance: totalDist, entries };
+  }
+
+  // Checks whether a candidate tour respects containment: all children cut before their enclosing parent.
+  function isValidTour(tour: number[]): boolean {
+    const seen = new Set<number>();
+    for (const node of tour) {
+      for (const child of inside[node] as Set<number>) {
+        if (!seen.has(child)) return false;
+      }
+      seen.add(node);
+    }
+    return true;
+  }
+
+  // Multi-start Nearest-Neighbor: try each contour with no children as the starting node.
+  const candidateStarts: number[] = [];
+  for (let i = 0; i < N; i++) {
+    if ((inside[i] as Set<number>).size === 0) {
+      candidateStarts.push(i);
+    }
+  }
+
+  if (candidateStarts.length === 0) {
+    let minArea = Infinity;
+    let minIdx = 0;
+    for (let i = 0; i < N; i++) {
+      if ((jobs[i] as T).area < minArea) {
+        minArea = (jobs[i] as T).area;
+        minIdx = i;
+      }
+    }
+    candidateStarts.push(minIdx);
+  }
+
+  let bestTour: number[] = [];
+  let bestDistance = Infinity;
+
+  for (const firstNode of candidateStarts) {
+    const visited = new Set<number>([firstNode]);
+    const tour: number[] = [firstNode];
+    let currentPos = contourEntry((jobs[firstNode] as T).contour, start, hasLeadIn);
+
+    while (visited.size < N) {
+      let nearestNext = -1;
+      let nearestDist = Infinity;
+      let nearestEntry: Point = currentPos;
+
+      for (let i = 0; i < N; i++) {
+        if (visited.has(i)) continue;
+
+        let ready = true;
+        for (const child of inside[i] as Set<number>) {
+          if (!visited.has(child)) {
+            ready = false;
+            break;
+          }
+        }
+        if (!ready) continue;
+
+        const entry = contourEntry((jobs[i] as T).contour, currentPos, hasLeadIn);
+        const d = distance(currentPos, entry);
+        if (d < nearestDist) {
+          nearestDist = d;
+          nearestNext = i;
+          nearestEntry = entry;
+        }
+      }
+
+      if (nearestNext === -1) {
+        let minArea = Infinity;
+        for (let i = 0; i < N; i++) {
+          if (!visited.has(i) && (jobs[i] as T).area < minArea) {
+            minArea = (jobs[i] as T).area;
+            nearestNext = i;
+          }
+        }
+        nearestEntry = contourEntry((jobs[nearestNext] as T).contour, currentPos, hasLeadIn);
+      }
+
+      tour.push(nearestNext);
+      visited.add(nearestNext);
+      currentPos = nearestEntry;
+    }
+
+    const { distance: d } = evaluateTour(tour);
+    if (d < bestDistance) {
+      bestDistance = d;
+      bestTour = tour;
+    }
+  }
+
+  let tour = bestTour;
+  let currentDistance = bestDistance;
+
+  // 2-Opt pass: reverses subsegments [i, j]
+  function pass2Opt(): boolean {
+    for (let i = 0; i < tour.length - 1; i++) {
+      for (let j = i + 1; j < tour.length; j++) {
+        const candidate = [
+          ...tour.slice(0, i),
+          ...tour.slice(i, j + 1).reverse(),
+          ...tour.slice(j + 1),
+        ];
+        if (!isValidTour(candidate)) continue;
+        const { distance: d } = evaluateTour(candidate);
+        if (d < currentDistance - 1e-6) {
+          tour = candidate;
+          currentDistance = d;
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Or-Opt single-node relocation: relocates node i to position k
+  function passOrOpt(): boolean {
+    for (let i = 0; i < tour.length; i++) {
+      const node = tour[i] as number;
+      const rest = [...tour.slice(0, i), ...tour.slice(i + 1)];
+      for (let k = 0; k < tour.length; k++) {
+        if (k === i) continue;
+        const candidate = [...rest.slice(0, k), node, ...rest.slice(k)];
+        if (!isValidTour(candidate)) continue;
+        const { distance: d } = evaluateTour(candidate);
+        if (d < currentDistance - 1e-6) {
+          tour = candidate;
+          currentDistance = d;
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Local search: 2-Opt and Or-Opt until no move reduces total rapid travel distance
+  let improved = true;
+  let iterations = 0;
+  const MAX_ITERATIONS = 50;
+
+  while (improved && iterations < MAX_ITERATIONS) {
+    iterations++;
+    improved = false;
+
+    if (pass2Opt()) {
+      improved = true;
+      continue;
+    }
+
+    if (passOrOpt()) {
+      improved = true;
+    }
+  }
+
+  // Rotate closed contours in-place to their optimal entry point and return ordered jobs
+  let currentPos = start;
+  const ordered: T[] = [];
+  for (const idx of tour) {
+    const job = jobs[idx] as T;
+    rotateContour(job.contour, currentPos, hasLeadIn);
+    ordered.push(job);
+    currentPos = job.contour.plunge ?? (job.contour.ring[0] as Point);
+  }
+
+  return ordered;
+}
+
+/**
+ * `open` paths in cutting order: nearest neighbour from `start` (or the previous
+ * cut's end point), each time going to the open path whose start is nearest.
+ */
+export function orderOpenPaths(open: OpenPath[], start: Point = [0, 0]): OpenPath[] {
+  if (open.length <= 1) return [...open];
+  const remaining = [...open];
+  const ordered: OpenPath[] = [];
+  let at = start;
+
+  while (remaining.length > 0) {
+    let nearest = 0;
+    let bestDistance = Infinity;
+
+    for (let i = 0; i < remaining.length; i++) {
+      const { path } = remaining[i] as OpenPath;
+      const p = path[0] as Point;
+      const dx = p[0] - at[0];
+      const dy = p[1] - at[1];
+      const d = dx * dx + dy * dy;
+      if (d < bestDistance) {
+        bestDistance = d;
+        nearest = i;
+      }
+    }
+
+    const [next] = remaining.splice(nearest, 1) as [OpenPath];
+    ordered.push(next);
+    at = (next.path.at(-1) ?? next.path[0]) as Point;
+  }
+
+  return ordered;
 }
 
 /**

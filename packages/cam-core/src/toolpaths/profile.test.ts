@@ -1,6 +1,7 @@
 import {
   CURRENT_SCHEMA_VERSION,
   DEFAULT_ENTRY_CLEARANCE,
+  type Point,
   type ProfileOperation,
   type ProfileParams,
   type ProjectDocument,
@@ -15,7 +16,16 @@ import type { Vec3 } from "../scene/stock";
 import { DEFAULT_SAFE_Z, generateToolpath, toolpathInput } from "./generate";
 import { excludeOvercuts } from "./overcuts";
 import { depthLevels } from "./passes";
-import { profileOvercuts, profileToolpath } from "./profile";
+import {
+  contourEntry,
+  isContourRotatable,
+  orderOpenPaths,
+  orderProfileJobs,
+  type ProfileJob,
+  profileOvercuts,
+  profileToolpath,
+  rotateContour,
+} from "./profile";
 import type { Toolpath, ToolpathMove } from "./toolpath";
 
 const tool: Tool = {
@@ -1307,5 +1317,303 @@ describe("generateToolpath", () => {
 
   it("rejects unknown operations", () => {
     expect(() => toolpathInput(doc(null), "nope")).toThrow();
+  });
+});
+
+describe("orderProfileJobs", () => {
+  function makeJob(
+    id: string,
+    center: Point,
+    size: number,
+    area?: number,
+  ): ProfileJob & { id: string } {
+    const [cx, cy] = center;
+    const h = size / 2;
+    const ring: Point[] = [
+      [cx - h, cy - h],
+      [cx + h, cy - h],
+      [cx + h, cy + h],
+      [cx - h, cy + h],
+    ];
+    return {
+      id,
+      area: area ?? size * size,
+      contour: {
+        ring,
+        wasteLeft: true,
+        area: area ?? size * size,
+        tabs: [],
+        startPoint: false,
+        plunge: null,
+      },
+      run: () => {},
+    };
+  }
+
+  it("cuts a row of same-sized contours in nearest-neighbour order from the origin", () => {
+    const row = [1, 2, 3, 4, 5].map((i) => makeJob(`h${i}`, [i * 20, 10], 5));
+    const shuffled = [row[3], row[0], row[4], row[1], row[2]] as typeof row;
+    const ordered = orderProfileJobs(shuffled, [0, 0]);
+    expect(ordered.map((j) => (j as (typeof row)[0]).id)).toEqual(["h1", "h2", "h3", "h4", "h5"]);
+  });
+
+  it("starts at the contour nearest to a custom start point", () => {
+    const h1 = makeJob("h1", [10, 10], 5);
+    const h2 = makeJob("h2", [90, 90], 5);
+    const ordered = orderProfileJobs([h1, h2], [100, 100]);
+    expect(ordered.map((j) => (j as typeof h1).id)).toEqual(["h2", "h1"]);
+  });
+
+  it("cuts inner contours before an outer contour that contains them even if outer is closer", () => {
+    // Outer box from [0, 0] to [80, 80], entry at [0, 0]
+    const outer = makeJob("outer", [40, 40], 80);
+    // Inner hole at [50, 50], size 10 (from [45, 45] to [55, 55]), entry at [45, 45]
+    const hole = makeJob("hole", [50, 50], 10);
+    // Start is at [-5, -5]: outer entry [0, 0] is much closer than hole entry [45, 45],
+    // but outer contains hole, so hole MUST be cut first!
+    const ordered = orderProfileJobs([outer, hole], [-5, -5]);
+    expect(ordered.map((j) => (j as typeof outer).id)).toEqual(["hole", "outer"]);
+  });
+
+  it("completes each part's holes and outline before travelling to the next part", () => {
+    // Part 1 near [20, 20]: outline and two holes
+    const p1Hole1 = makeJob("p1h1", [15, 20], 4);
+    const p1Hole2 = makeJob("p1h2", [25, 20], 4);
+    const p1Out = makeJob("p1out", [20, 20], 20);
+
+    // Part 2 near [200, 200]: outline and two holes
+    const p2Hole1 = makeJob("p2h1", [195, 200], 4);
+    const p2Hole2 = makeJob("p2h2", [205, 200], 4);
+    const p2Out = makeJob("p2out", [200, 200], 20);
+
+    // Give them in scrambled order
+    const scrambled = [p2Out, p1Out, p2Hole2, p1Hole1, p2Hole1, p1Hole2];
+    const ordered = orderProfileJobs(scrambled, [0, 0]);
+    const ids = ordered.map((j) => (j as typeof p1Out).id);
+
+    // Part 1 is closer to [0, 0], so its holes cut first, then its outline, then Part 2's holes, then its outline
+    expect(ids.slice(0, 3).sort()).toEqual(["p1h1", "p1h2", "p1out"]);
+    expect(ids[2]).toBe("p1out");
+    expect(ids.slice(3).sort()).toEqual(["p2h1", "p2h2", "p2out"]);
+    expect(ids[5]).toBe("p2out");
+  });
+
+  it("uses multi-start Nearest-Neighbor to avoid greedy initial trap", () => {
+    // Points along a line: -20, 10, 30, 70.
+    // From (0, 0):
+    // Single-start NN from (0,0) chooses 10 first -> 30 -> 70 -> -20.
+    // Travel = 10 + 20 + 40 + 90 = 160.
+    // Multi-start NN starting at -20 visits -20 -> 10 -> 30 -> 70.
+    // Travel = 20 + 30 + 20 + 40 = 110 (much shorter!).
+    const n1 = makeJob("n1", [-20, 0], 2);
+    const n2 = makeJob("n2", [10, 0], 2);
+    const n3 = makeJob("n3", [30, 0], 2);
+    const n4 = makeJob("n4", [70, 0], 2);
+
+    const ordered = orderProfileJobs([n2, n3, n4, n1], [0, 0]);
+    expect(ordered.map((j) => (j as typeof n1).id)).toEqual(["n1", "n2", "n3", "n4"]);
+  });
+
+  it("untangles crossing paths with 2-Opt inversions", () => {
+    // 4 points in a rectangle:
+    // P1: (0, 50), P2: (50, 50), P3: (0, 0), P4: (50, 0)
+    // If order has crossing diagonal P1 -> P4 -> P3 -> P2,
+    // 2-Opt reverses P4..P3 to P3..P4, giving P1 -> P3 -> P4 -> P2
+    const p1 = makeJob("p1", [0, 50], 2);
+    const p2 = makeJob("p2", [50, 50], 2);
+    const p3 = makeJob("p3", [0, 0], 2);
+    const p4 = makeJob("p4", [50, 0], 2);
+
+    const ordered = orderProfileJobs([p1, p4, p3, p2], [0, 50]);
+    const ids = ordered.map((j) => (j as typeof p1).id);
+    expect(ids).toEqual(["p1", "p3", "p4", "p2"]);
+  });
+
+  it("relocates isolated nodes with Or-Opt single-node relocation", () => {
+    // Monotonic points along X: x = 0, 20, 40, 60, 80
+    // Misplaced order: [x0, x20, x60, x80, x40]
+    const p0 = makeJob("p0", [0, 0], 2);
+    const p1 = makeJob("p1", [20, 0], 2);
+    const p2 = makeJob("p2", [40, 0], 2);
+    const p3 = makeJob("p3", [60, 0], 2);
+    const p4 = makeJob("p4", [80, 0], 2);
+
+    const ordered = orderProfileJobs([p0, p1, p3, p4, p2], [0, 0]);
+    expect(ordered.map((j) => (j as typeof p0).id)).toEqual(["p0", "p1", "p2", "p3", "p4"]);
+  });
+
+  it("rotates entry points of adjacent circles toward the previous cut", () => {
+    // Two circles of radius 5:
+    // c1 center [20, 0], initial start at [25, 0] (3 o'clock)
+    // c2 center [50, 0], initial start at [55, 0] (3 o'clock)
+    const makeCircleJob = (id: string, center: Point, r: number) => {
+      const N = 32;
+      const ring: Point[] = Array.from({ length: N }, (_, i) => {
+        const a = (2 * Math.PI * i) / N;
+        return [center[0] + r * Math.cos(a), center[1] + r * Math.sin(a)];
+      });
+      return {
+        id,
+        area: Math.PI * r * r,
+        contour: {
+          ring,
+          wasteLeft: true,
+          area: Math.PI * r * r,
+          tabs: [],
+          startPoint: false,
+          plunge: null,
+        },
+        run: () => {},
+      };
+    };
+
+    const c1 = makeCircleJob("c1", [20, 0], 5);
+    const c2 = makeCircleJob("c2", [50, 0], 5);
+
+    orderProfileJobs([c1, c2], [0, 0]);
+
+    // c1 entered from [0, 0], so its start point should rotate to [15, 0] (9 o'clock)
+    expect(c1.contour.ring[0]?.[0]).toBeCloseTo(15, 0.5);
+    expect(c1.contour.ring[0]?.[1]).toBeCloseTo(0, 0.5);
+
+    // c2 entered from c1's exit at [15, 0], so its start point should rotate to [45, 0] (9 o'clock)
+    expect(c2.contour.ring[0]?.[0]).toBeCloseTo(45, 0.5);
+    expect(c2.contour.ring[0]?.[1]).toBeCloseTo(0, 0.5);
+  });
+});
+
+describe("rotateContour", () => {
+  it("rotates a circle start point to the point on the path closest to reference", () => {
+    const N = 16;
+    const ring: Point[] = Array.from({ length: N }, (_, i) => {
+      const a = (2 * Math.PI * i) / N;
+      return [50 + 10 * Math.cos(a), 10 * Math.sin(a)];
+    });
+    const contour = {
+      ring,
+      wasteLeft: true,
+      area: Math.PI * 100,
+      tabs: [],
+      startPoint: false,
+      plunge: null,
+    };
+    expect(isContourRotatable(contour)).toBe(true);
+
+    // Reference at [0, 0]: closest point on circle is at [40, 0]
+    expect(contourEntry(contour, [0, 0])[0]).toBeCloseTo(40, 1);
+    expect(contourEntry(contour, [0, 0])[1]).toBeCloseTo(0, 1);
+    rotateContour(contour, [0, 0]);
+    expect(contour.ring[0]?.[0]).toBeCloseTo(40, 1);
+    expect(contour.ring[0]?.[1]).toBeCloseTo(0, 1);
+  });
+
+  it("does not rotate a contour with user start point, plunge point, or tabs", () => {
+    const ring: Point[] = [
+      [10, 10],
+      [20, 10],
+      [20, 20],
+      [10, 20],
+    ];
+    const withStart = {
+      ring: [...ring],
+      wasteLeft: true,
+      area: 100,
+      tabs: [],
+      startPoint: true,
+      plunge: null,
+    };
+    rotateContour(withStart, [0, 0]);
+    expect(withStart.ring[0]).toEqual([10, 10]);
+
+    const withPlunge = {
+      ring: [...ring],
+      wasteLeft: true,
+      area: 100,
+      tabs: [],
+      startPoint: false,
+      plunge: [15, 15] as Point,
+    };
+    rotateContour(withPlunge, [0, 0]);
+    expect(withPlunge.ring[0]).toEqual([10, 10]);
+
+    const withTabs = {
+      ring: [...ring],
+      wasteLeft: true,
+      area: 100,
+      tabs: [[0, 5]] as [number, number][],
+      startPoint: false,
+      plunge: null,
+    };
+    rotateContour(withTabs, [0, 0]);
+    expect(withTabs.ring[0]).toEqual([10, 10]);
+  });
+});
+
+describe("orderOpenPaths", () => {
+  it("orders open paths nearest-neighbour from start", () => {
+    const l1 = {
+      path: [
+        [10, 10],
+        [10, 20],
+      ] as Point[],
+      oneWay: false,
+    };
+    const l2 = {
+      path: [
+        [30, 10],
+        [30, 20],
+      ] as Point[],
+      oneWay: false,
+    };
+    const l3 = {
+      path: [
+        [50, 10],
+        [50, 20],
+      ] as Point[],
+      oneWay: false,
+    };
+    const ordered = orderOpenPaths([l3, l1, l2], [0, 0]);
+    expect(ordered).toEqual([l1, l2, l3]);
+  });
+});
+
+describe("profileToolpath greedy nearest-neighbour ordering", () => {
+  it("cuts multiple holes in nearest-neighbour order rather than raw input order", () => {
+    const makeCircle = (id: string, center: Point, radius: number): Shape => {
+      const [cx, cy] = center;
+      const start: Point = [cx + radius, cy];
+      return {
+        id,
+        name: id,
+        layer: "holes",
+        drawingId: DRAWING_ID,
+        paths: [
+          {
+            start,
+            segments: [{ kind: "arc", to: start, center, clockwise: false }],
+            closed: true,
+          },
+        ],
+      };
+    };
+
+    // 4 identical holes along y = 20, given in zig-zag entity order: [100, 20], [20, 20], [80, 20], [40, 20]
+    const h1 = makeCircle("h1", [100, 20], 5);
+    const h2 = makeCircle("h2", [20, 20], 5);
+    const h3 = makeCircle("h3", [80, 20], 5);
+    const h4 = makeCircle("h4", [40, 20], 5);
+
+    const toolpath = profile({ side: "inside" }, [h1, h2, h3, h4]);
+
+    // Track the first rapid entry to each hole at the retract height
+    const travels = toolpath.moves
+      .filter(
+        (move, i) =>
+          move.kind === "rapid" && move.to[2] === 5 && toolpath.moves[i + 1]?.to[2] === 1,
+      )
+      .map((move) => move.to[0]);
+
+    // Should visit monotonically from x = 20 -> 40 -> 80 -> 100 instead of 100 -> 20 -> 80 -> 40
+    expect(travels.map((x) => Math.round(x / 10) * 10)).toEqual([20, 40, 80, 100]);
   });
 });
