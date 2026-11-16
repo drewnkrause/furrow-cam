@@ -1101,7 +1101,9 @@
     "show": "显示 {name}",
     "hide": "隐藏 {name}",
     "lock": "锁定 {name}",
-    "unlock": "解锁 {name}"
+    "unlock": "解锁 {name}",
+    "download": "将 {name} 下载为 STL",
+    "downloadFailed": "无法读取此模型的文件。"
   },
   "ToolpathProgress": {
     "title": "正在计算刀具路径 · 已完成{done}/{total}",

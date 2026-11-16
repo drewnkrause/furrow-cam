@@ -1101,7 +1101,9 @@
     "show": "Show {name}",
     "hide": "Hide {name}",
     "lock": "Lock {name}",
-    "unlock": "Unlock {name}"
+    "unlock": "Unlock {name}",
+    "download": "Download {name} as STL",
+    "downloadFailed": "Couldn't read this model's file."
   },
   "ToolpathProgress": {
     "title": "Computing toolpaths · {done} of {total} done",

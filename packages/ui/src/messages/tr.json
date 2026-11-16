@@ -1101,7 +1101,9 @@
     "show": "{name} göster",
     "hide": "{name} gizle",
     "lock": "{name} kilitle",
-    "unlock": "{name} kilidini aç"
+    "unlock": "{name} kilidini aç",
+    "download": "{name} dosyasını STL olarak indir",
+    "downloadFailed": "Bu modelin dosyası okunamadı."
   },
   "ToolpathProgress": {
     "title": "Takım yolları hesaplanıyor · {done}/{total} tamamlandı",

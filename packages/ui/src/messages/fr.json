@@ -1101,7 +1101,9 @@
     "show": "Afficher {name}",
     "hide": "Masquer {name}",
     "lock": "Verrouiller {name}",
-    "unlock": "Déverrouiller {name}"
+    "unlock": "Déverrouiller {name}",
+    "download": "Télécharger {name} en STL",
+    "downloadFailed": "Impossible de lire le fichier de ce modèle."
   },
   "ToolpathProgress": {
     "title": "Calcul des trajectoires · {done} sur {total} terminés",
