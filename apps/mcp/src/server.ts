@@ -30,6 +30,7 @@ import {
 import { createProjects, type Project, type Projects, ToolError } from "./projects";
 import {
   chooseMachine,
+  setHoldingTabsSetup,
   setStock,
   setToolOf,
   setTouchOff,
@@ -564,7 +565,7 @@ export function createServer(projects: Projects = createProjects(), library = li
     {
       title: "Set up a two-sided project",
       description:
-        "Makes the project two-sided (the stock is cut from the top, turned over about a line through its centre along the flip axis, and cut from the other face) and sets it up, as the app's two-sided settings do; settings left out stay as they are. Turning it on flips about x, parting halfway down the deepest model. twoSided: false makes it one-sided again and moves every operation to the top side. lineUp: pins (positions along the flip axis from the stock's centre, two at least; a drill operation with pins cuts them), edges (a stock corner goes into a fence corner on both sides), or null to turn it over by eye. tabs: holding tabs that keep the part held on the bottom side, spread round each model (count per model) or at positions moved to the nearest model's outline; null removes them. Lengths in millimetres. Refused as a whole if any setting is. Returns the project summary.",
+        "Makes the project two-sided (the stock is cut from the top, turned over about a line through its centre along the flip axis, and cut from the other face) and sets it up, as the app's two-sided settings do; settings left out stay as they are. Turning it on flips about x, parting halfway down the deepest model. twoSided: false makes it one-sided again and moves every operation to the top side. lineUp: pins (positions along the flip axis from the stock's centre, two at least; a drill operation with pins cuts them), edges (a stock corner goes into a fence corner on both sides), or null to turn it over by eye. Holding tabs are set with set_holding_tabs. Lengths in millimetres. Refused as a whole if any setting is. Returns the project summary.",
       inputSchema: {
         path: projectPath,
         twoSided: z.boolean(),
@@ -589,30 +590,49 @@ export function createServer(projects: Projects = createProjects(), library = li
           ])
           .nullable()
           .optional(),
-        tabs: z
-          .strictObject({
-            width: mm("The tabs' width").optional(),
-            thickness: mm("The tabs' thickness, less than the bottom side's depth").optional(),
-            fullHeight: z
-              .boolean()
-              .optional()
-              .describe(
-                "true: the tabs keep the stock's whole thickness, which neither side cuts.",
-              ),
-            count: z.number().int().min(1).optional().describe("Tabs spread round each model."),
-            positions: z
-              .array(z.tuple([z.number(), z.number()]))
-              .optional()
-              .describe("[x, y] in millimetres from the stock's bottom-left corner, one per tab."),
-          })
-          .nullable()
-          .optional(),
       },
     },
     ({ path, ...request }) =>
       respond(async () => {
         const project = await projects.get(path);
         setTwoSidedSetup(project, request);
+        return summary(project);
+      }),
+  );
+
+  server.registerTool(
+    "set_holding_tabs",
+    {
+      title: "Set the holding tabs",
+      description:
+        "Turns on and sets up the holding tabs every 3D operation leaves between a model and the stock round it, so the part stays held until the last pass, as the app's holding tab settings do; settings left out stay as they are. For a model cut free all round: one-sided, a model reaching the stock bottom; two-sided, on the bottom side. Turning them on spreads 4 round each model, 6 wide and 2 thick (no more than half the depth they stand in). One-sided, a tab stands its thickness up from the stock bottom; two-sided, it lies just below the parting plane. tabs: null removes them. Lengths in millimetres. Refused as a whole if any setting is. Returns the project summary.",
+      inputSchema: {
+        path: projectPath,
+        tabs: z
+          .strictObject({
+            width: mm("The tabs' width").optional(),
+            thickness: mm(
+              "The tabs' thickness, less than the stock's, or a two-sided project's bottom side's depth",
+            ).optional(),
+            fullHeight: z
+              .boolean()
+              .optional()
+              .describe("true: the tabs keep the stock's whole thickness, which nothing cuts."),
+            count: z.number().int().min(1).optional().describe("Tabs spread round each model."),
+            positions: z
+              .array(z.tuple([z.number(), z.number()]))
+              .optional()
+              .describe(
+                "[x, y] in millimetres from the stock's bottom-left corner, one per tab, each moved to the nearest model's outline.",
+              ),
+          })
+          .nullable(),
+      },
+    },
+    ({ path, tabs }) =>
+      respond(async () => {
+        const project = await projects.get(path);
+        setHoldingTabsSetup(project, tabs);
         return summary(project);
       }),
   );
