@@ -14,7 +14,7 @@ import {
   toolProblem,
 } from "@furrow/document";
 import type { Rect } from "../geometry/bounds";
-import { boxRect, placedModelBox } from "../scene/model";
+import { boxRect, type PlacedModel, placedModelBox } from "../scene/model";
 import {
   drillTargets,
   type Flip,
@@ -30,7 +30,7 @@ import { activeTouchOff } from "../scene/touch-off";
 import { cutterProfile, type SimulationCut } from "../simulation/simulation";
 import { drillToolpath } from "./drill";
 import { engraveCut, engraveToolpath } from "./engrave";
-import { holdingTabStrips, holdingTabTop } from "./holding-tabs";
+import { type HoldingTabStrip, holdingTabStrips, holdingTabTop } from "./holding-tabs";
 import type { ToolpathMessage } from "./messages";
 import { pocketToolpath } from "./pocket/pocket";
 import { profileToolpath } from "./profile";
@@ -93,6 +93,12 @@ export type ToolpathInput = {
    * flag, not the models, so moving another model recomputes nothing.
    */
   reachesOther: boolean;
+  /**
+   * Whether a 3D operation frees its model from the stock round it with no
+   * holding tab to keep it (ADR-0063, ADR-0086), which it warns about;
+   * `false` for every other operation.
+   */
+  loose: boolean;
   /** Retract height above the stock top. */
   safeZ: number;
   /** Height above the stock top where rapids down stop and feeding starts. */
@@ -154,6 +160,20 @@ export function toolpathInputs(
   const { twoSided, width, height, thickness, tabs: holding } = doc.stock;
   const size = { width, height, thickness };
   const strips = holding ? holdingTabStrips(size, doc.models, holding) : [];
+  /** The tabs a side's 3D operations leave, in its stock coordinates. */
+  function sideTabs(bottom: boolean): HoldingTab[] {
+    if (!holding) return [];
+    const flip: Flip | null = twoSided && bottom ? { ...size, axis: twoSided.flipAxis } : null;
+    const top = holdingTabTop(doc.stock, holding, bottom);
+    return strips.map(({ modelId, at, to }) => ({
+      modelId,
+      from: flip ? flipPoint2(flip, at) : at,
+      to: flip ? flipPoint2(flip, to) : to,
+      width: holding.width,
+      top,
+    }));
+  }
+  const tabs = { top: sideTabs(false), bottom: sideTabs(true) };
   const inputs = new Map<Operation, ToolpathInput>();
   function inputOf(operation: Operation): ToolpathInput {
     const known = inputs.get(operation);
@@ -189,19 +209,9 @@ export function toolpathInputs(
           : -doc.stock.thickness,
       parting: sided && (bottom ? sided.partingDepth - doc.stock.thickness : -sided.partingDepth),
       flip,
-      tabs:
-        modelId === null
-          ? null
-          : ((holding &&
-              strips.map(({ modelId, at, to }) => ({
-                modelId,
-                from: flip ? flipPoint2(flip, at) : at,
-                to: flip ? flipPoint2(flip, to) : to,
-                width: holding.width,
-                top: holdingTabTop(doc.stock, holding, bottom),
-              }))) ??
-            []),
+      tabs: modelId === null ? null : bottom && twoSided ? tabs.bottom : tabs.top,
       reachesOther: reachesOtherModel(doc, operation, flip, stock),
+      loose: comesLoose(doc.stock, models.get(modelId ?? ""), bottom, strips),
       safeZ,
       entryClearance,
       // Each side starts from uncut stock (ADR-0060).
@@ -257,6 +267,29 @@ function reachesOtherModel(
 }
 
 /**
+ * Whether a 3D operation on `model` frees it from the stock round it with no
+ * holding tab on it (ADR-0063, ADR-0086): two-sided, on the bottom side;
+ * one-sided, when the model reaches the stock bottom and there is stock
+ * round it to come loose from.
+ */
+function comesLoose(
+  stock: ProjectDocument["stock"],
+  model: (PlacedModel & { id: string }) | undefined,
+  bottom: boolean,
+  strips: readonly HoldingTabStrip[],
+): boolean {
+  if (!model || strips.some(({ modelId }) => modelId === model.id)) return false;
+  if (stock.twoSided) return bottom;
+  const { min, max } = placedModelBox(model);
+  const fillsStock =
+    min[0] <= RELIEF_TOLERANCE &&
+    min[1] <= RELIEF_TOLERANCE &&
+    max[0] >= stock.width - RELIEF_TOLERANCE &&
+    max[1] >= stock.height - RELIEF_TOLERANCE;
+  return min[2] <= RELIEF_TOLERANCE - stock.thickness && !fillsStock;
+}
+
+/**
  * The shapes `targets` refer to, in their order, each with only its targeted
  * paths (ADR-0018). Targets of shapes not in `shapes` and indices past a
  * shape's paths are skipped.
@@ -297,6 +330,7 @@ function ownKey({
   flip,
   tabs,
   reachesOther,
+  loose,
   safeZ,
   entryClearance,
   touchOff,
@@ -314,6 +348,7 @@ function ownKey({
     flip,
     tabs,
     reachesOther,
+    loose,
     safeZ,
     entryClearance,
     touchOff,
@@ -563,6 +598,7 @@ function* operationSteps(
     flip,
     tabs,
     reachesOther,
+    loose,
     before,
     touchOff,
     ...options
@@ -611,16 +647,7 @@ function* operationSteps(
       const positions = mesh?.(model.sha256);
       if (!positions) throw new MissingMeshError(model.sha256);
       const warnings: ToolpathMessage[] = [];
-      // Cut all round from both sides, or one-sided down to the stock bottom,
-      // a model with no tabs comes loose (ADR-0063, ADR-0086).
-      const cutFree =
-        flip !== null ||
-        (parting === null &&
-          stockBottom !== null &&
-          placedModelBox(model).min[2] <= stockBottom + RELIEF_TOLERANCE);
-      if (cutFree && tabs && !tabs.some(({ modelId }) => modelId === model.id)) {
-        warnings.push({ code: "toolpath.noHoldingTabs" });
-      }
+      if (loose) warnings.push({ code: "toolpath.noHoldingTabs" });
       const boundary =
         operation.type === "relief_finish"
           ? finishingBoundary(operation.params)

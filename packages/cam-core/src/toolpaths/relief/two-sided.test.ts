@@ -366,4 +366,15 @@ describe("relief toolpaths on one side (#616)", () => {
     const [held] = toolpaths(doc) as Toolpath[];
     expect(held?.warnings).not.toContainEqual({ code: "toolpath.noHoldingTabs" });
   });
+
+  it("doesn't warn about a model that fills the stock, with no stock round it to come loose from", () => {
+    const full = {
+      ...BLOCK,
+      bounds: { min: [0, 0, 0], max: [60, 50, 18] },
+      placement: { ...BLOCK.placement, position: [0, 0] },
+    } satisfies Model;
+    const doc = { ...project([roughing("top")], null), models: [full] };
+    expect(toolpathInputs(doc)[0]?.loose).toBe(false);
+    expect(toolpathInputs(project([roughing("top")], null))[0]?.loose).toBe(true);
+  });
 });

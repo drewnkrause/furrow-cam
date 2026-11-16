@@ -24,7 +24,10 @@ export function projectSummary(document: ProjectDocument) {
             ? `${length(xyOrigin.x)}, ${length(xyOrigin.y)} from the stock's bottom-left corner`
             : xyOrigin.anchor,
         ...(twoSided && { twoSided: twoSidedText(twoSided, length) }),
-        tabs: tabs ? tabsText(tabs, length) : "no holding tabs",
+        // Only 3D operations leave them, so a drawings-only project doesn't mention them.
+        ...((tabs || document.models.length > 0) && {
+          tabs: tabs ? tabsText(tabs, length) : "no holding tabs",
+        }),
       },
     },
     machine,

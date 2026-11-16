@@ -171,7 +171,8 @@ describe("setHoldingTabsSetup", () => {
     );
     setHoldingTabsSetup(project, null);
     expect(document().stock.tabs).toBeNull();
-    expect(projectSummary(document()).stock.inProjectUnits.tabs).toBe("no holding tabs");
+    // A drawings-only project doesn't mention them once they're off.
+    expect(projectSummary(document()).stock.inProjectUnits).not.toHaveProperty("tabs");
   });
 
   it("refuses invalid settings as a whole, changing nothing", () => {
