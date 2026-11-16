@@ -4,6 +4,7 @@ import {
   closedLoops,
   engraveCut,
   excludeOvercuts,
+  type HoldingTabStrip,
   holdingTabStrips,
   holeSnapTargets,
   modelOutlines,
@@ -20,7 +21,14 @@ import {
   targetedShapes,
   type Vec3,
 } from "@furrow/cam-core";
-import type { DrillOperation, Operation, Point } from "@furrow/document";
+import type {
+  DrillOperation,
+  HoldingTabs as HoldingTabsSettings,
+  Model,
+  Operation,
+  Point,
+  Stock,
+} from "@furrow/document";
 import { Edges } from "@react-three/drei";
 import { type ThreeEvent, useFrame } from "@react-three/fiber";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
@@ -160,12 +168,7 @@ export function HoldingTabs({
   const loops = useMemo(() => modelOutlines(models), [models]);
   const tabs = stock.twoSided?.tabs;
   const strips = useMemo(
-    () =>
-      (tabs ? holdingTabStrips(stock, models, tabs) : []).map((strip) => {
-        const model = models.find(({ id }) => id === strip.modelId);
-        const heightmap = model && previews.get(previewKey(model))?.heightmap;
-        return model && heightmap ? reachPreview(strip, model, heightmap) : strip;
-      }),
+    () => (tabs ? drawnHoldingTabStrips(stock, models, tabs, previews) : []),
     [stock, models, tabs, previews],
   );
   if (!stock.twoSided || !tabs) return null;
@@ -193,6 +196,23 @@ export function HoldingTabs({
       />
     </TabMarker>
   ));
+}
+
+/**
+ * The strips of `tabs` as drawn: carried on inward to the model's surface
+ * over its preview, or from its box while the preview is missing (#608).
+ */
+export function drawnHoldingTabStrips(
+  stock: Pick<Stock, "width" | "height">,
+  models: readonly Model[],
+  tabs: Pick<HoldingTabsSettings, "positions" | "width">,
+  previews: ReadonlyMap<string, ModelPreview>,
+): HoldingTabStrip[] {
+  return holdingTabStrips(stock, models, tabs).map((strip) => {
+    const model = models.find(({ id }) => id === strip.modelId);
+    const heightmap = model && previews.get(previewKey(model))?.heightmap;
+    return model && heightmap ? reachPreview(strip, model, heightmap) : strip;
+  });
 }
 
 /**

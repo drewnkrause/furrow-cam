@@ -13,6 +13,7 @@ import type { Rect } from "../../geometry/bounds";
 import { boxRect } from "../../scene/model";
 import { type Flip, type ModelView, modelView } from "../../scene/sides";
 import type { Vec3 } from "../../scene/stock";
+import { walkInward } from "../../simulation/grid-walk";
 import {
   type CutterProfile,
   cutterProfile,
@@ -20,7 +21,6 @@ import {
   type SimulationCut,
   sweepMoves,
 } from "../../simulation/simulation";
-import { walkInward } from "../holding-tabs";
 import type { ToolpathMessage } from "../messages";
 import { type Toolpath, ToolpathBuilder } from "../toolpath";
 import { rasterizeTriangles } from "./mesh-raster";
