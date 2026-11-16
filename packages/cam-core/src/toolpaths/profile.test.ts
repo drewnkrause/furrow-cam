@@ -101,6 +101,7 @@ function profile(
   overrides: Partial<ProfileParams> = {},
   shapes: Shape[] = [square],
   toolOverrides: Partial<Tool> = {},
+  entryClearance = 1,
 ): Toolpath {
   const operation: ProfileOperation = {
     id: "11111111-2222-4333-8444-555555555555",
@@ -112,7 +113,7 @@ function profile(
     tool: { ...tool, ...toolOverrides },
     params: { ...params, ...overrides },
   };
-  return profileToolpath(operation, shapes, { safeZ: 5, entryClearance: 1 });
+  return profileToolpath(operation, shapes, { safeZ: 5, entryClearance });
 }
 
 /** Consecutive moves as `[from, move]`, starting from the first move's target. */
@@ -663,8 +664,7 @@ describe("profileToolpath with tabs", () => {
     const high = { ...tabs([[50, 0]]), height: 5 };
     const plain = profile({ tabs: high });
     const leadIn = profile({ tabs: high, leadIn: { radius: 3 } });
-    const plunged = profile({ tabs: high, startPoints: [{ start: [0, 30], plunge: [-20, 30] }] });
-    for (const toolpath of [plain, leadIn, plunged]) {
+    for (const toolpath of [plain, leadIn]) {
       expect(descents(toolpath, -1)).toEqual([
         ["feed", -1, -2],
         ["feed", -1, -4],
@@ -684,16 +684,13 @@ describe("profileToolpath with tabs", () => {
     expect(descents(ramped, -1).filter(([kind]) => kind === "rapid")).toEqual([
       ["rapid", -1, -4 + c],
     ]);
-    // Finishing without allowance, the earlier passes went to full depth.
-    const finished = profile({ finishPass: true, tabs: high });
-    expect(descents(finished, -1).slice(-2)).toEqual([
-      ["rapid", -1, -6 + c],
-      ["feed", -6 + c, -6],
-    ]);
     // With allowance, it stands to the stock top in front of the tool, so the lap plunges all the way.
     const allowed = profile({ allowance: 0.5, finishPass: true, tabs: high });
     expect(descents(allowed, -1).slice(-1)).toEqual([["feed", -1, -6]]);
-    for (const toolpath of [plain, leadIn, plunged, ramped, finished, allowed]) {
+    // Without an entry clearance there is no margin for a rapid down.
+    const tight = profile({ tabs: high }, [square], {}, 0);
+    expect(descents(tight, -1).map(([kind]) => kind)).toEqual(["feed", "feed", "feed"]);
+    for (const toolpath of [plain, leadIn, ramped, allowed, tight]) {
       expect(intrusions(toolpath, -1, 5, [[50, -3]])).toEqual([]);
     }
   });
