@@ -16,6 +16,23 @@ export function comment(text: string): string {
   return `(${safe})`;
 }
 
+/** Ensures any comment on the line strictly uses `(comment)` syntax rather than `;` semicolons. */
+export function ensureParenthesesComments(line: string): string {
+  let inParen = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === "(") inParen = true;
+    else if (char === ")") inParen = false;
+    else if (char === ";" && !inParen) {
+      const code = line.slice(0, i).trimEnd();
+      const commentText = line.slice(i + 1).trim();
+      const formatted = comment(commentText);
+      return code.length > 0 ? `${code} ${formatted}` : formatted;
+    }
+  }
+  return line;
+}
+
 /**
  * Collects G-code lines, writing only the coordinates and feed that change.
  * Coordinates go in in stock coordinates and come out in work coordinates.
@@ -33,7 +50,7 @@ export class GcodeWriter {
   constructor(private readonly offset: Vec3) {}
 
   line(text: string) {
-    this.lines.push(text);
+    this.lines.push(ensureParenthesesComments(text));
   }
 
   comment(text: string) {
@@ -43,7 +60,12 @@ export class GcodeWriter {
   /** A custom block, verbatim; it may have moved the tool or changed modes. */
   custom(label: BlockLabel, block: string) {
     const first = this.lines.length + 1;
-    this.lines.push(...block.replace(/\r\n?/g, "\n").replace(/\n$/, "").split("\n"));
+    const lines = block
+      .replace(/\r\n?/g, "\n")
+      .replace(/\n$/, "")
+      .split("\n")
+      .map(ensureParenthesesComments);
+    this.lines.push(...lines);
     this.customBlocks.push({ label, first, last: this.lines.length });
     this.forget();
   }
@@ -66,7 +88,7 @@ export class GcodeWriter {
   }
 
   toString(): string {
-    return `${this.lines.join("\n")}\n`;
+    return `${this.lines.join("\r\n")}\r\n`;
   }
 
   private toWork(to: Axes): Axes {

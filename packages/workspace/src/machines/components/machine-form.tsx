@@ -51,6 +51,11 @@ export function MachineForm({
   const machine = id === null ? { ...NEW_MACHINE_DEFAULTS, ...values } : values;
   // A new machine leaves the speeds out (unset) unless a preset says the spindle is manual (`null`).
   const [manualSpindle, setManualSpindle] = useState(machine.spindleRpmMin === null);
+  const [pathBlending, setPathBlending] = useState(
+    machine.pathBlendingTolerance !== null &&
+      machine.pathBlendingTolerance !== undefined &&
+      machine.pathBlendingTolerance !== false,
+  );
   const t = useTranslations("Machine");
   const [errors, setErrors] = useState<MachineFormErrors>({});
   const [saved, setSaved] = useState(false);
@@ -95,6 +100,53 @@ export function MachineForm({
           options={POST_PROCESSOR_LABELS}
           error={errors.postProcessor}
         />
+        <Field
+          label={t("fileExtension")}
+          {...field("fileExtension")}
+          placeholder={t("fileExtensionPlaceholder")}
+          list="file-extension-suggestions"
+        />
+        <datalist id="file-extension-suggestions">
+          <option value="nc" />
+          <option value="gcode" />
+          <option value="tap" />
+        </datalist>
+        <div className="grid content-start gap-2 sm:col-span-full">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="pathBlending"
+              name="pathBlending"
+              checked={pathBlending}
+              onChange={(event) => setPathBlending(event.target.checked)}
+              className="size-4 accent-primary"
+              aria-describedby="pathBlending-hint"
+            />
+            <Label htmlFor="pathBlending">{t("pathBlending")}</Label>
+            <span id="pathBlending-hint" className="text-sm text-muted-foreground">
+              {t("pathBlendingHint")}
+            </span>
+          </div>
+          {pathBlending && (
+            <div className="max-w-xs">
+              <NumberField
+                label={t("pathBlendingTolerance")}
+                id="pathBlendingTolerance"
+                name="pathBlendingTolerance"
+                defaultValue={
+                  typeof machine.pathBlendingTolerance === "number"
+                    ? machine.pathBlendingTolerance
+                    : null
+                }
+                min={0}
+                step={0.01}
+                placeholder={t("pathBlendingTolerancePlaceholder")}
+                error={errors.pathBlendingTolerance}
+                onValueChange={onEdit}
+              />
+            </div>
+          )}
+        </div>
       </fieldset>
 
       <fieldset className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

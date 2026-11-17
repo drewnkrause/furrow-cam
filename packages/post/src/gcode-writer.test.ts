@@ -1,15 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { comment, GcodeWriter } from "./gcode-writer";
+import { comment, ensureParenthesesComments, GcodeWriter } from "./gcode-writer";
 import { GcodeExportError } from "./post";
 
 function lines(out: GcodeWriter): string[] {
-  return out.toString().trimEnd().split("\n");
+  return out.toString().trimEnd().split("\r\n");
 }
 
 describe("comment", () => {
   it("keeps parentheses and control characters out of the comment", () => {
     expect(comment("Sign (v2)\nfinal")).toBe("(Sign [v2] final)");
     expect(comment("a\t\r\nb\u007fc")).toBe("(a b c)");
+  });
+
+  it("converts semicolon comments strictly to parenthesis comments", () => {
+    expect(ensureParenthesesComments("; my comment")).toBe("(my comment)");
+    expect(ensureParenthesesComments("G0 Z5 ; retract")).toBe("G0 Z5 (retract)");
+    expect(ensureParenthesesComments("G0 X0 (already in parens; fine)")).toBe(
+      "G0 X0 (already in parens; fine)",
+    );
   });
 });
 
@@ -50,7 +58,7 @@ describe("GcodeWriter", () => {
       expect(error).toBeInstanceOf(GcodeExportError);
       expect(error).toMatchObject({ operation: "Outline", detail: { code: "export.notFinite" } });
     }
-    expect(out.toString()).toBe("\n");
+    expect(out.toString()).toBe("\r\n");
   });
 
   it("writes every word again after forget", () => {
@@ -65,15 +73,15 @@ describe("GcodeWriter", () => {
     const out = new GcodeWriter([0, 0, 0]);
     out.comment("Start");
     out.rapid({ z: 5 });
-    out.custom("toolChange", "G91 G0 Z10\r\nM0\r\n");
+    out.custom("toolChange", "G91 G0 Z10 ; up\r\nM0\r\n");
     out.rapid({ z: 5 });
-    expect(lines(out)).toEqual(["(Start)", "G0 Z5", "G91 G0 Z10", "M0", "G0 Z5"]);
+    expect(lines(out)).toEqual(["(Start)", "G0 Z5", "G91 G0 Z10 (up)", "M0", "G0 Z5"]);
     expect(out.customBlocks).toEqual([{ label: "toolChange", first: 3, last: 4 }]);
   });
 
-  it("ends the program with a newline", () => {
+  it("ends the program with CRLF line endings", () => {
     const out = new GcodeWriter([0, 0, 0]);
     out.line("M30");
-    expect(out.toString()).toBe("M30\n");
+    expect(out.toString()).toBe("M30\r\n");
   });
 });

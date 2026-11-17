@@ -147,6 +147,23 @@ describe("exportGcode", () => {
     expect(gcode).not.toContain("Disabled");
   });
 
+  it("uses the machine fileExtension for the exported filename", () => {
+    const project = referenceProject();
+    const docWithTap = {
+      ...project,
+      machine: { ...shapeoko, fileExtension: "tap" },
+    };
+    const { fileName } = oneFile(exportGcode(docWithTap, "Plate", undefined, NAMING));
+    expect(fileName).toBe("plate-2026-11-01.tap");
+
+    const docWithDotNc = {
+      ...project,
+      machine: { ...shapeoko, fileExtension: ".nc" },
+    };
+    const { fileName: fileNameNc } = oneFile(exportGcode(docWithDotNc, "Plate", undefined, NAMING));
+    expect(fileNameNc).toBe("plate-2026-11-01.nc");
+  });
+
   it("leaves out what cuts something hidden, saying so when nothing is left (ADR-0080)", () => {
     const project = referenceProject();
     const hidden = {
@@ -350,7 +367,7 @@ describe("exportGcode", () => {
     const doc = referenceProject();
     doc.machine = lowRider;
     const { gcode } = oneFile(exportGcode(doc, "Plate"));
-    expect(gcode).toContain("M3\n");
+    expect(gcode).toContain("M3\r\n");
     expect(gcode).not.toMatch(/ S\d/);
   });
 
@@ -400,7 +417,7 @@ describe("exportGcode", () => {
     expect(warnings).toEqual([]);
     expect(gcode).toContain("(Operation: Finish)");
     // Down onto the flat top, and across it.
-    expect(gcode).toContain("G1 Z0 F500\nG1 X99.963 F1500\n");
+    expect(gcode).toContain("G1 Z0 F500\r\nG1 X99.963 F1500\r\n");
   });
 
   it("cuts a model deeper than the stock no deeper than its bottom, and says so", () => {

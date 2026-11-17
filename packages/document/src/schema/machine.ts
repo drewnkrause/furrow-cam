@@ -4,6 +4,17 @@ import { FeedRate, Name, PositiveLength, SpindleRpm } from "./units";
 export const PostProcessorId = z.enum(["grbl"]);
 export type PostProcessorId = z.infer<typeof PostProcessorId>;
 
+export const FileExtension = z
+  .string()
+  .trim()
+  .regex(/^\.?[a-zA-Z0-9]+$/, "validation.invalidExtension")
+  .max(16, "validation.maxCharacters")
+  .nullable();
+export type FileExtension = z.infer<typeof FileExtension>;
+
+export const PathBlendingTolerance = z.union([z.number().positive(), z.boolean()]);
+export type PathBlendingTolerance = z.infer<typeof PathBlendingTolerance>;
+
 /**
  * Custom G-code written verbatim at one point of the program, replacing what
  * the post-processor writes there by default. `null` keeps the default. A
@@ -36,6 +47,8 @@ export const NEW_MACHINE_DEFAULTS = {
   accelerationXY: 200,
   accelerationZ: 80,
   postProcessor: "grbl",
+  fileExtension: null,
+  pathBlendingTolerance: null,
 } as const satisfies Partial<Machine>;
 
 /**
@@ -73,6 +86,17 @@ export const Machine = z
     /** Height above the stock top where rapids down stop and feeding starts, at most `safeZ`. */
     entryClearance: z.number().nonnegative(),
     postProcessor: PostProcessorId,
+    /**
+     * File extension for exported G-code (e.g. "tap", "nc", "gcode").
+     * `null` defaults to the post-processor's default.
+     */
+    fileExtension: FileExtension.nullish().default(null),
+    /**
+     * Continuous path blending tolerance (G64 P<val>).
+     * `true` uses dialect defaults (0.25 mm in metric, 0.01 in inches).
+     * A number specifies the exact tolerance. `null` emits no G64 command.
+     */
+    pathBlendingTolerance: PathBlendingTolerance.nullable().nullish().default(null),
     /** Replaces the default preamble (units, absolute mode, feed mode…). */
     programStart: GcodeBlock,
     /** Replaces the default ending (spindle off, retract, program end). */
@@ -142,7 +166,12 @@ export function hasAccelerations(machine: Machine): boolean {
 export function upgradeMachine(stored: unknown): unknown {
   if (typeof stored !== "object" || stored === null || Array.isArray(stored)) return stored;
   // #240.
-  return { spinUpDelay: DEFAULT_SPIN_UP_DELAY, ...stored };
+  return {
+    spinUpDelay: DEFAULT_SPIN_UP_DELAY,
+    fileExtension: null,
+    pathBlendingTolerance: null,
+    ...stored,
+  };
 }
 
 /**

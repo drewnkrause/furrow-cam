@@ -64,6 +64,22 @@ describe("Machine", () => {
     const above = Machine.safeParse({ ...machine, entryClearance: machine.safeZ + 0.1 });
     expect(above.error?.issues).toMatchObject([{ path: ["entryClearance"] }]);
   });
+
+  it("accepts valid file extensions and rejects invalid ones", () => {
+    for (const fileExtension of ["tap", "nc", "gcode", ".tap", ".nc", null]) {
+      expect(Machine.parse({ ...machine, fileExtension }).fileExtension).toBe(fileExtension);
+    }
+    expect(Machine.safeParse({ ...machine, fileExtension: "bad/ext" }).success).toBe(false);
+  });
+
+  it("accepts path blending tolerance as a positive number, boolean, or null", () => {
+    for (const pathBlendingTolerance of [0.25, 0.01, true, false, null]) {
+      expect(Machine.parse({ ...machine, pathBlendingTolerance }).pathBlendingTolerance).toBe(
+        pathBlendingTolerance,
+      );
+    }
+    expect(Machine.safeParse({ ...machine, pathBlendingTolerance: -0.1 }).success).toBe(false);
+  });
 });
 
 describe("machineSpinUpDelay", () => {

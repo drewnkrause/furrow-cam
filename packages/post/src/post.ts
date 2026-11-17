@@ -10,6 +10,7 @@ import {
   type Stock,
   type StockSide,
   type Tool,
+  type Units,
 } from "@furrow/document";
 
 /** Everything a post-processor needs to write one program. */
@@ -29,6 +30,8 @@ export type PostInput = {
    * side's file, for the header to say what to do between them (ADR-0060).
    */
   side?: SideSetup | null;
+  /** The project's units ("mm" or "in"). */
+  units?: Units;
 };
 
 /** One side of a two-sided project's export. */

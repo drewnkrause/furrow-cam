@@ -25,14 +25,24 @@ export async function saveMachine(id: string | null, form: FormData): Promise<Ma
   if (parsed.errors) return parsed.errors;
   const { machine } = parsed;
 
+  const data = {
+    ...machine,
+    pathBlendingTolerance:
+      typeof machine.pathBlendingTolerance === "number"
+        ? machine.pathBlendingTolerance
+        : machine.pathBlendingTolerance
+          ? 0.25
+          : null,
+  };
+
   if (id === null) {
-    await db.machine.create({ data: { ...machine, userId } });
+    await db.machine.create({ data: { ...data, userId } });
   } else {
     const machineId = z.uuid().safeParse(id);
     if (!machineId.success) return { form: notFound };
     const { count } = await db.machine.updateMany({
       where: { id: machineId.data, userId },
-      data: machine,
+      data,
     });
     if (count === 0) return { form: notFound };
   }

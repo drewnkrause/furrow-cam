@@ -54,7 +54,7 @@ function post(input: Partial<PostInput>) {
 
 /** The program's motion lines, without the header and footer. */
 function motion(gcode: string): string[] {
-  return gcode.split("\n").filter((line) => /^G[01] /.test(line));
+  return gcode.split(/\r?\n/).filter((line) => /^G[01] /.test(line));
 }
 
 describe("grbl", () => {
@@ -79,7 +79,7 @@ describe("grbl", () => {
         "G0 X0 Y0",
         "M30",
         "",
-      ].join("\n"),
+      ].join("\r\n"),
     );
   });
 
@@ -157,7 +157,7 @@ describe("grbl", () => {
   describe("spindle", () => {
     it("omits S for a manual spindle", () => {
       const { gcode } = post({ machine: { ...lowRider, toolChange: null } });
-      expect(gcode).toContain("\nM3\n");
+      expect(gcode).toContain("\r\nM3\r\n");
       expect(gcode).not.toContain("G4");
     });
 
@@ -168,7 +168,9 @@ describe("grbl", () => {
       });
       /** Each `M3` with the dwell after it, if any. */
       const starts = (gcode: string) =>
-        gcode.match(/^M3( S\d+)?(\nG4 P.*)?$/gm)?.map((line) => line.replace("\n", " ")) ?? [];
+        gcode
+          .match(/^M3( S\d+)?(\r?\nG4 P.*)?$/gm)
+          ?.map((line) => line.replace(/\r/g, "").replace("\n", " ")) ?? [];
 
       it("waits after starting the spindle and raising its speed, not at the same or a lower one", () => {
         const operations = [at(18000, 0), at(18000, 10), at(24000, 20), at(12000, 30)];
@@ -301,7 +303,7 @@ describe("grbl", () => {
       const { gcode } = post({ operations });
       expect(gcode.match(/^M0/gm)).toHaveLength(1);
       // Zeroing Z during the pause may leave G91 or G20 set.
-      expect(gcode).toMatch(/^M0 .*\nG21 G90 G94 G17$/m);
+      expect(gcode).toMatch(/^M0 .*\r?\nG21 G90 G94 G17\r?$/m);
       expect(gcode.match(/^\(Furrow tool:/gm)).toHaveLength(2);
       expect(gcode).toContain(
         [
@@ -316,7 +318,7 @@ describe("grbl", () => {
           "M3 S12000",
           "G4 P5",
           "G0 X20 Y0",
-        ].join("\n"),
+        ].join("\r\n"),
       );
     });
   });
@@ -346,7 +348,7 @@ describe("grbl", () => {
             "M0 (Change the bit and zero Z on the touch-off pad)",
             "G21 G90 G94 G17",
             "(Furrow tool: type=drill diameter=6.35)",
-          ].join("\n"),
+          ].join("\r\n"),
         );
         expect(gcode).toContain(
           `(Zero Z again on the touch-off pad after each tool change: ${at}, 15 mm across)`,
@@ -369,7 +371,7 @@ describe("grbl", () => {
           "M0 (Change the bit)",
           "G21 G90 G94 G17",
           "(Furrow tool: type=drill diameter=6.35)",
-        ].join("\n"),
+        ].join("\r\n"),
       );
     });
 
@@ -391,7 +393,7 @@ describe("grbl", () => {
           "M0 (Zero Z)",
           "G21 G90 G94 G17",
           "(Furrow tool: type=drill diameter=6.35)",
-        ].join("\n"),
+        ].join("\r\n"),
       );
       expect(gcode).not.toContain("Change the bit");
     });
@@ -402,15 +404,17 @@ describe("grbl", () => {
         stock: { ...stock, touchOff: pad },
         machine: { ...machine, toolChange: "M5\nG0 Z20\nG0 X10 Y10\nG38.2 Z-50 F100" },
       });
-      expect(gcode).toContain("M5\nG0 Z20\nG0 X7.5 Y192.5\nG38.2 Z-50 F100\nG21 G90 G94 G17");
+      expect(gcode).toContain(
+        "M5\r\nG0 Z20\r\nG0 X7.5 Y192.5\r\nG38.2 Z-50 F100\r\nG21 G90 G94 G17",
+      );
       expect(gcode).not.toContain("X10 Y10");
     });
 
     it("rise to the safe Z the program is exported with", () => {
       const exported = (safeZ: number) =>
         post({ operations, safeZ, stock: { ...stock, touchOff: pad } }).gcode;
-      expect(exported(5)).toContain("M5\nG0 Z5\nG0 X7.5 Y192.5\nM0");
-      expect(exported(20)).toContain("M5\nG0 Z20\nG0 X7.5 Y192.5\nM0");
+      expect(exported(5)).toContain("M5\r\nG0 Z5\r\nG0 X7.5 Y192.5\r\nM0");
+      expect(exported(20)).toContain("M5\r\nG0 Z20\r\nG0 X7.5 Y192.5\r\nM0");
       expect(exported(20)).not.toContain("{safeZ}");
     });
 
@@ -425,7 +429,7 @@ describe("grbl", () => {
           operationStart: "(At {padX} {safez})",
         },
       });
-      expect(gcode).toContain("M5\nG0 Z20\nM0 (Change the bit)");
+      expect(gcode).toContain("M5\r\nG0 Z20\r\nM0 (Change the bit)");
       expect(gcode).toContain("(At 7.5 {safez})");
       expect(warnings).toEqual([
         {
@@ -475,7 +479,7 @@ describe("grbl", () => {
           "G21 G90 G94 G17",
           "(Furrow tool: type=v_bit diameter=6.35 vAngle=60 tipDiameter=0)",
           "(Operation: Sign)",
-        ].join("\n"),
+        ].join("\r\n"),
       );
       expect(gcode).toContain("(Zero Z again after each tool change)");
     });
@@ -527,10 +531,10 @@ describe("grbl", () => {
           "M62 P1 (start spindle pin 27)",
           "G21 G90 G94 G17",
           "(Tool:",
-        ].join("\n"),
+        ].join("\r\n"),
       );
       expect(gcode).not.toContain("(Operation:");
-      expect(gcode.match(/^G4 P1$/gm)).toHaveLength(2);
+      expect(gcode.match(/^G4 P1\r?$/gm)).toHaveLength(2);
       // The modes and every word are written again after a custom block, which
       // may have moved the tool or switched to relative coordinates.
       expect(gcode).toContain(
@@ -546,9 +550,9 @@ describe("grbl", () => {
           "M3 S18000",
           "G4 P5",
           "G0 X20 Y0",
-        ].join("\n"),
+        ].join("\r\n"),
       );
-      expect(gcode.endsWith("G0 Z5\nM63 P1\nM2\n")).toBe(true);
+      expect(gcode.endsWith("G0 Z5\r\nM63 P1\r\nM2\r\n")).toBe(true);
       expect(gcode).not.toContain("M30");
     });
   });
@@ -561,7 +565,7 @@ describe("grbl", () => {
     /** The program with `toolChange` as the machine's tool change, and the line number of `text` in it. */
     function withToolChange(toolChange: string) {
       const output = post({ machine: { ...machine, toolChange }, operations });
-      const lineOf = (text: string) => output.gcode.split("\n").indexOf(text) + 1;
+      const lineOf = (text: string) => output.gcode.split(/\r?\n/).indexOf(text) + 1;
       return { ...output, lineOf };
     }
     /** The warning about line `line` of custom block `block`. */
@@ -612,7 +616,7 @@ describe("grbl", () => {
         machine: { ...machine, programStart: "$H\nG21 G90" },
         operations,
       });
-      const line = gcode.split("\n").indexOf("$H") + 1;
+      const line = gcode.split(/\r?\n/).indexOf("$H") + 1;
       expect(warnings).toEqual([moveWarning("programStart", line, "unreadable")]);
     });
 
@@ -642,7 +646,7 @@ describe("grbl", () => {
         machine: { ...machine, programEnd: "G0 X400\nG0 Z-20\nM30" },
         operations,
       });
-      const line = gcode.split("\n").indexOf("G0 Z-20") + 1;
+      const line = gcode.split(/\r?\n/).indexOf("G0 Z-20") + 1;
       expect(warnings).toEqual([moveWarning("programEnd", line, "belowBottom", -20)]);
     });
   });
@@ -655,7 +659,7 @@ describe("grbl", () => {
           { operation: operation("Sign", vBit), toolpath: plunge([20, 0]) },
         ],
       });
-      const lines = gcode.split("\n");
+      const lines = gcode.split(/\r?\n/);
       const shapes = lines.flatMap((line, i) => (line.startsWith("(Furrow tool:") ? [i] : []));
       expect(shapes).toHaveLength(2);
       const [first, second] = shapes as [number, number];
@@ -691,6 +695,93 @@ describe("grbl", () => {
 
   it("keeps parentheses and line breaks out of comments", () => {
     const { gcode } = post({ name: "Sign (v2)\nfinal" });
-    expect(gcode.split("\n")[0]).toBe("(Sign [v2] final)");
+    expect(gcode.split(/\r?\n/)[0]).toBe("(Sign [v2] final)");
+  });
+
+  describe("Next Wave CNC Shark improvements", () => {
+    it("strictly uses (comment) syntax for all comments and CRLF line endings", () => {
+      const { gcode } = post({
+        machine: {
+          ...machine,
+          programStart: "G21\nG90 ; start mode\nM3 S18000",
+        },
+      });
+      expect(gcode).not.toContain(";");
+      expect(gcode).toContain("G90 (start mode)");
+      expect(gcode.includes("\r\n")).toBe(true);
+    });
+
+    it("does not append default M30 or G28 when a custom programEnd is provided", () => {
+      const { gcode } = post({
+        machine: {
+          ...machine,
+          programEnd: "M5\nG0 Z50\nM2",
+        },
+      });
+      expect(gcode).toContain("M5\r\nG0 Z50\r\nM2");
+      expect(gcode).not.toContain("M30");
+      expect(gcode).not.toContain("G28");
+    });
+
+    it("does not inject M30, G28, or M06 between operations using the same tool", () => {
+      const { gcode } = post({
+        machine: {
+          ...machine,
+          programStart: "G21\nG90",
+          programEnd: "M5\nM2",
+        },
+        operations: [
+          { operation: operation("Op 1", endMill), toolpath: plunge([0, 0]) },
+          { operation: operation("Op 2", endMill), toolpath: plunge([10, 10]) },
+        ],
+      });
+      expect(gcode.match(/\(Tool:/g)).toHaveLength(1);
+      expect(gcode).not.toContain("M6");
+      expect(gcode).not.toContain("M06");
+      expect(gcode).not.toContain("G28");
+      expect(gcode).not.toContain("M30");
+    });
+
+    it("emits G64 P0.25 in metric (G21) when pathBlendingTolerance is enabled", () => {
+      const { gcode } = post({
+        machine: {
+          ...machine,
+          pathBlendingTolerance: true,
+        },
+      });
+      expect(gcode).toContain("G21 G90 G94 G17\r\nG64 P0.25");
+    });
+
+    it("emits G64 P0.01 in inches (G20) when pathBlendingTolerance is enabled", () => {
+      const { gcode } = post({
+        machine: {
+          ...machine,
+          pathBlendingTolerance: true,
+        },
+        units: "in",
+      });
+      expect(gcode).toContain("G21 G90 G94 G17\r\nG64 P0.01");
+    });
+
+    it("emits G64 P<val> with a custom tolerance value", () => {
+      const { gcode } = post({
+        machine: {
+          ...machine,
+          pathBlendingTolerance: 0.5,
+        },
+      });
+      expect(gcode).toContain("G21 G90 G94 G17\r\nG64 P0.5");
+    });
+
+    it("emits G64 P0.01 when custom programStart sets G20", () => {
+      const { gcode } = post({
+        machine: {
+          ...machine,
+          programStart: "G20\nG90",
+          pathBlendingTolerance: true,
+        },
+      });
+      expect(gcode).toContain("G64 P0.01");
+    });
   });
 });

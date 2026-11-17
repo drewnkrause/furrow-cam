@@ -21,6 +21,19 @@ function gcodeField(form: FormData, key: string): string | null {
 export function parseMachineForm(form: FormData) {
   const manualSpindle = form.get("manualSpindle") === "on";
   const spinUpDelay = numberField(form, "spinUpDelay");
+  const rawFileExt = form.get("fileExtension");
+  const fileExtension =
+    typeof rawFileExt === "string" && rawFileExt.trim() !== "" ? rawFileExt.trim() : null;
+
+  let pathBlendingTolerance: number | boolean | null = null;
+  const pathBlending = form.get("pathBlending");
+  const blendingTolerance = numberField(form, "pathBlendingTolerance");
+  if (pathBlending === "on" || pathBlending === "true") {
+    pathBlendingTolerance = blendingTolerance ?? true;
+  } else if (blendingTolerance !== null) {
+    pathBlendingTolerance = blendingTolerance;
+  }
+
   const input = {
     name: String(form.get("name") ?? ""),
     workAreaX: numberField(form, "workAreaX"),
@@ -39,6 +52,8 @@ export function parseMachineForm(form: FormData) {
     safeZ: numberField(form, "safeZ"),
     entryClearance: numberField(form, "entryClearance"),
     postProcessor: form.get("postProcessor"),
+    fileExtension,
+    pathBlendingTolerance,
     programStart: gcodeField(form, "programStart"),
     programEnd: gcodeField(form, "programEnd"),
     operationStart: gcodeField(form, "operationStart"),

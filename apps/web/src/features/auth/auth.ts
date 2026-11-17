@@ -37,7 +37,7 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: PASSWORD_MIN_LENGTH,
     maxPasswordLength: PASSWORD_MAX_LENGTH,
-    requireEmailVerification: true,
+    requireEmailVerification: process.env.NODE_ENV === "production",
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }, request) => {
       const locale = emailLocale(request);
@@ -49,7 +49,7 @@ export const auth = betterAuth({
     },
   },
   emailVerification: {
-    sendOnSignUp: true,
+    sendOnSignUp: process.env.NODE_ENV === "production",
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url }, request) => {
       const locale = emailLocale(request);

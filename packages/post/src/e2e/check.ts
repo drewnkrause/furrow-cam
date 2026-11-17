@@ -27,6 +27,7 @@ const ALLOWED = new Set([
   "G4",
   "G17",
   "G21",
+  "G64",
   "G90",
   "G91",
   "G94",
@@ -129,6 +130,9 @@ export function checkGcode(gcode: string, project: CheckedProject): Violation[] 
       } else if (command === "G4") {
         dwell = line.words.find((word) => word.letter === "P")?.value;
         if (dwell === undefined) fail(line.number, "words", "G4 without P");
+      } else if (command === "G64") {
+        const tolerance = line.words.find((word) => word.letter === "P")?.value;
+        if (tolerance === undefined) fail(line.number, "words", "G64 without P");
       } else if (command === "M0") {
         if (!(position[2] >= top - EPSILON)) {
           fail(line.number, "pause", "pauses with the tool in the stock");

@@ -248,7 +248,7 @@ describe("measured: the touch-off pad (ADR-0041)", () => {
       // Every point across it is above the cut, as every point is above the stock bottom.
       expect(above(from, to, -0.05, 0.1)).toEqual(above(from, to, -1000, 0.1));
     }
-    const lines = gcode.split("\n");
+    const lines = gcode.split(/\r?\n/);
     const pauses = lines.flatMap((line, i) => (line.startsWith("M0") ? [i] : []));
     expect(pauses.length).toBeGreaterThan(0);
     for (const i of pauses) {

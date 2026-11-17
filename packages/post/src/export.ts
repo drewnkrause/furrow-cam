@@ -171,10 +171,15 @@ export function postToolpaths(
   }
 
   const processor = POST_PROCESSORS[doc.machine?.postProcessor ?? DEFAULT_POST_PROCESSOR];
+  const fileExtension = doc.machine?.fileExtension
+    ? doc.machine.fileExtension.startsWith(".")
+      ? doc.machine.fileExtension
+      : `.${doc.machine.fileExtension}`
+    : processor.extension;
   // One date for every file of the export, even across midnight.
   const fileNaming = { ...naming, date: naming.date ?? new Date() };
   const fileName = (side: "top" | "bottom" | null) =>
-    gcodeFileName(name, fileNaming, side, processor.extension);
+    gcodeFileName(name, fileNaming, side, fileExtension);
   const post = (operations: typeof toPost, side: SideSetup | null, fileName: string) => {
     const output = processor.post({
       name,
@@ -183,6 +188,7 @@ export function postToolpaths(
       safeZ: first.input.safeZ,
       operations,
       side,
+      units: doc.units,
     });
     // Each side's program may say the same, e.g. of a custom block.
     const said = new Set(warnings.map((warning) => JSON.stringify(warning)));

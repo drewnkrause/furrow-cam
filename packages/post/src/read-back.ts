@@ -65,6 +65,7 @@ type BlockProblem = "material" | "belowBottom" | "unknownPosition" | "unreadable
 /** Splits `gcode` into blocks, throwing on text that isn't G-code. */
 export function parseGcode(gcode: string): GcodeLine[] {
   return gcode
+    .replace(/\r\n?/g, "\n")
     .replace(/\n$/, "")
     .split("\n")
     .map((text, i) => {
@@ -157,6 +158,7 @@ export function customBlockWarnings(
 
   // Custom blocks are written by hand: lowercase, `;` comments, `G0Z5`, `X.5`.
   const text = gcode
+    .replace(/\r\n?/g, "\n")
     .replace(/\n$/, "")
     .split("\n")
     .map((line, i) =>

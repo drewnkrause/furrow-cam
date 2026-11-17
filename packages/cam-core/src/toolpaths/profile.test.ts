@@ -1261,6 +1261,8 @@ describe("generateToolpath", () => {
             safeZ: machineSafeZ,
             entryClearance,
             postProcessor: "grbl",
+            fileExtension: null,
+            pathBlendingTolerance: null,
             programStart: null,
             programEnd: null,
             operationStart: null,

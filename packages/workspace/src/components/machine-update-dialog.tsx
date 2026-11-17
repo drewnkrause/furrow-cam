@@ -52,6 +52,8 @@ const LABELS = {
   safeZ: "safeZ",
   entryClearance: "entryClearance",
   postProcessor: "postProcessor",
+  fileExtension: "fileExtension",
+  pathBlendingTolerance: "pathBlendingTolerance",
   programStart: "blocks.programStart",
   programEnd: "blocks.programEnd",
   operationStart: "blocks.operationStart",
@@ -62,11 +64,16 @@ const LABELS = {
 function formatField(machine: Machine, key: keyof Machine, units: Units, locale: string): string {
   const value = machine[key];
   if (value === null) return "–";
+  if (typeof value === "boolean") return value ? "✓" : "–";
   if (typeof value === "string") {
     return key === "postProcessor" ? POST_PROCESSOR_LABELS[machine.postProcessor] : value;
   }
   const decimal = (text: string) => localizeDecimal(text, locale);
   switch (key) {
+    case "fileExtension":
+      return String(value);
+    case "pathBlendingTolerance":
+      return `${decimal(String(value))} mm`;
     case "maxFeedXY":
     case "maxFeedZ":
       return `${decimal(formatQuantity(value, "feed", units))} ${unitLabel("feed", units)}`;

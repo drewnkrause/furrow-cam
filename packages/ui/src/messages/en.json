@@ -1187,7 +1187,14 @@
     "saveChanges": "Save changes",
     "add": "Add machine",
     "askedHint": "Fill in for your machine.",
-    "saved": "Settings saved."
+    "saved": "Settings saved.",
+    "fileExtension": "File extension",
+    "fileExtensionPlaceholder": "nc",
+    "fileExtensionHint": "Extension for exported G-code files (e.g. nc, gcode, tap). Defaults to the post-processor's standard extension.",
+    "pathBlending": "Path blending (G64)",
+    "pathBlendingHint": "Enable G64 continuous path mode with blending tolerance.",
+    "pathBlendingTolerance": "Blending tolerance",
+    "pathBlendingTolerancePlaceholder": "0.25"
   },
   "NewMachine": {
     "starts": {

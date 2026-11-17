@@ -140,6 +140,31 @@ function writeHeader(program: Program, steps: PostStep[]) {
   if (first) out.line(toolShapeComment(first.tool));
   if (machine?.programStart) writeCustom(program, "programStart", machine.programStart);
   else out.line(MODES);
+  writeBlendingTolerance(program);
+}
+
+function writeBlendingTolerance(program: Program) {
+  const { out, input } = program;
+  const { machine, units } = input;
+  if (
+    !machine ||
+    machine.pathBlendingTolerance === null ||
+    machine.pathBlendingTolerance === false
+  ) {
+    return;
+  }
+  if (machine.programStart && /\bG64\b/i.test(machine.programStart)) {
+    return;
+  }
+  const isInches =
+    units === "in" || (machine.programStart !== null && /\bG20\b/i.test(machine.programStart));
+  const tolerance =
+    typeof machine.pathBlendingTolerance === "number"
+      ? machine.pathBlendingTolerance
+      : isInches
+        ? 0.01
+        : 0.25;
+  out.line(`G64 P${formatNumber(tolerance)}`);
 }
 
 /**
