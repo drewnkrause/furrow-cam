@@ -2,6 +2,7 @@ import {
   autoTabPositions,
   maxChamferWidth,
   type TabPlacement,
+  tabContours,
   targetedShapes,
   vBitConeDepth,
 } from "@furrow/cam-core";
@@ -674,6 +675,17 @@ export function defaultTabs(document: ProjectDocument, operation: ProfileOperati
       count: DEFAULT_TAB_COUNT,
     }),
   };
+}
+
+/**
+ * How many tabs a profile has on each contour, for its "Auto place" count:
+ * the tabs over the contours, rounded, so exact when every contour has the
+ * same number; `DEFAULT_TAB_COUNT` without tabs or contours.
+ */
+export function tabsPerContour(document: ProjectDocument, operation: ProfileOperation): number {
+  const tabs = operation.params.tabs?.positions.length ?? 0;
+  const contours = tabContours(operationShapes(document, operation), operation.params.side).length;
+  return tabs > 0 && contours > 0 ? Math.max(1, Math.round(tabs / contours)) : DEFAULT_TAB_COUNT;
 }
 
 /** The profile `id`'s tabs, if it is a profile with tabs. */

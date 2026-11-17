@@ -44,7 +44,7 @@ import {
   addLocatingPin,
   addTouchOff,
   autoPlaceHoldingTabs,
-  HOLDING_TABS_PER_MODEL,
+  holdingTabsPerModel,
   partingDepthLimits,
   removeTouchOff,
   type StockDimension,
@@ -219,12 +219,19 @@ function HoldingTabsSection() {
   const units = useDocumentStore((s) => s.document.units);
   const stock = useDocumentStore((s) => s.document.stock);
   const hasModels = useDocumentStore((s) => s.document.models.length > 0);
-  const [count, setCount] = useState(HOLDING_TABS_PER_MODEL);
+  const { tabs } = stock;
+  // The tabs per model, until the user types another count; again once the number of tabs
+  // changes, not on every frame of a drag.
+  const [count, setCount] = useState(() => holdingTabsPerModel(store.getState().document));
+  const [counted, setCounted] = useState(tabs?.positions.length);
+  if (counted !== tabs?.positions.length) {
+    setCounted(tabs?.positions.length);
+    setCount(holdingTabsPerModel(store.getState().document));
+  }
   // What a thickness was refused against: once either changes, it may fit.
   const [refused, setRefused] = useState<{ depth: number; tabs: HoldingTabs } | null>(null);
   const t = useTranslations("Stock");
   const length = useLength(units);
-  const { tabs } = stock;
   const depth = holdingTabsDepth(stock);
   const tooThick = refused !== null && refused.depth === depth && refused.tabs === tabs;
   // Only 3D operations leave them; tabs already on stay visible so they can be turned off.

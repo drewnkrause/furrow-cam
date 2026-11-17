@@ -21,8 +21,8 @@ import {
 import { gestureHandlers } from "../../stores/gesture-handlers";
 import {
   autoPlaceTabs,
-  DEFAULT_TAB_COUNT,
   defaultTabs,
+  tabsPerContour,
   updateProfileParams,
 } from "../../stores/operation-actions";
 import { Checkbox } from "../checkbox";
@@ -235,7 +235,14 @@ function TabsFields({
   const editing = useWorkspaceStore((s) => s.editing === "tabs");
   const setEditing = useWorkspaceStore((s) => s.setEditing);
   const [mode, setMode] = useState<PlacementMode>("count");
-  const [count, setCount] = useState(DEFAULT_TAB_COUNT);
+  // The tabs per contour, until the user types another count; again once the number of tabs
+  // changes, not on every frame of a drag.
+  const [count, setCount] = useState(() => tabsPerContour(store.getState().document, operation));
+  const [counted, setCounted] = useState(tabs.positions.length);
+  if (counted !== tabs.positions.length) {
+    setCounted(tabs.positions.length);
+    setCount(tabsPerContour(store.getState().document, operation));
+  }
   const [spacing, setSpacing] = useState(100);
   const length = {
     layout: "inline",
