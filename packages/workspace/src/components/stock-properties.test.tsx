@@ -112,6 +112,24 @@ describe("StockProperties: two-sided (ADR-0060)", () => {
     expect(document().stock.tabs).toBeNull();
   });
 
+  it("counts the tabs already placed round each model (#618)", () => {
+    const document = render({
+      ...createProjectDocument(),
+      models: [model],
+      stock: {
+        ...createProjectDocument().stock,
+        tabs: { width: 6, thickness: 2, fullHeight: false, positions: Array(8).fill([0, 0]) },
+      },
+    });
+    expect(screen.getByLabelText(/Tabs per model/)).toHaveProperty("value", "8");
+    fireEvent.change(screen.getByLabelText(/Tabs per model/), { target: { value: "3" } });
+    fireEvent.blur(screen.getByLabelText(/Tabs per model/));
+    expect(screen.getByLabelText(/Tabs per model/)).toHaveProperty("value", "3");
+    fireEvent.click(screen.getByRole("button", { name: "Place" }));
+    expect(document().stock.tabs?.positions).toHaveLength(3);
+    expect(screen.getByLabelText(/Tabs per model/)).toHaveProperty("value", "3");
+  });
+
   it("says a tab thickness is refused until the bottom side gets deeper", () => {
     render({ ...createProjectDocument(), models: [model] });
     fireEvent.click(screen.getByRole("checkbox", { name: "Two-sided" }));
