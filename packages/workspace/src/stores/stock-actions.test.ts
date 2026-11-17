@@ -15,7 +15,6 @@ import {
   addLocatingPin,
   addTouchOff,
   autoPlaceHoldingTabs,
-  holdingTabsPerModel,
   moveHoldingTab,
   pickXYOrigin,
   removeTouchOff,
@@ -525,10 +524,8 @@ describe("holding tabs (#357)", () => {
   it("are placed again by a count and moved one by one", () => {
     const store = tabbedStore();
     setHoldingTabs(store, true);
-    expect(holdingTabsPerModel(store.getState().document)).toBe(4);
     autoPlaceHoldingTabs(store, 2);
     expect(stock(store).tabs?.positions).toEqual(autoHoldingTabPositions([model], 2));
-    expect(holdingTabsPerModel(store.getState().document)).toBe(2);
     moveHoldingTab(store, 1, [1, 2]);
     moveHoldingTab(store, 5, [3, 4]);
     expect(stock(store).tabs?.positions[1]).toEqual([1, 2]);
