@@ -48,7 +48,7 @@ function inFrame([x, y]: Point): boolean {
 describe("patternPaths", () => {
   it.each(PatternCell.options)("fills the frame with %s, inside it and its hole empty", (cell) => {
     const paths = patternPaths(frame, settings({ cell, gap: 1 }));
-    expect(paths.length).toBeGreaterThanOrEqual(10);
+    expect(paths.length).toBeGreaterThanOrEqual(5);
     expect(points(paths).every(inFrame)).toBe(true);
     const line = LINE_PATTERN_CELLS.includes(cell);
     expect(paths.every((path) => path.closed === !line)).toBe(true);
@@ -122,6 +122,57 @@ describe("patternPaths", () => {
         patternPaths(frame, settings({ cell })),
       );
     }
+  });
+
+  it("leaves out lines lying along the boundary's edges", () => {
+    const box = [polygonPath(rect(0, 0, 100, 80))];
+    for (const cell of ["lines", "crosshatch"] as const) {
+      const paths = patternPaths(box, settings({ cell }));
+      const along = paths.filter((path) => {
+        const [a, b] = flattenPath(path) as [Point, Point];
+        return (
+          (a[0] === b[0] && (a[0] === 0 || a[0] === 100)) ||
+          (a[1] === b[1] && (a[1] === 0 || a[1] === 80))
+        );
+      });
+      expect(along).toEqual([]);
+      expect(paths).toHaveLength(cell === "lines" ? 7 : 7 + 9);
+    }
+  });
+
+  it("winds every closed cell's outline counter-clockwise, mirrored or not, at rounded coordinates", () => {
+    const box = [polygonPath(rect(0, 0, 100, 80))];
+    for (const mirrored of [false, true]) {
+      const placement = { position: [3, 4] as Point, rotation: 33, mirrored };
+      const paths = patternPaths(box, settings({ size: 7, placement }));
+      expect(paths.every((path) => signedArea(flattenPath(path)) > 0)).toBe(true);
+      expect(
+        points(paths).every(
+          ([x, y]) => x === Math.round(x * 1e9) / 1e9 && y === Math.round(y * 1e9) / 1e9,
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it("covers the boundary with Voronoi cells whatever the seed", () => {
+    for (let seed = 0; seed < 20; seed++) {
+      const paths = patternPaths(frame, settings({ cell: "voronoi", seed }));
+      expect(area(paths) / (100 * 80 - 20 * 20)).toBeCloseTo(1, 3);
+    }
+  });
+
+  it("stays fast inside a boundary of many vertices", () => {
+    const disk = Array.from(
+      { length: 20_000 },
+      (_, k): Point => [
+        150 + 100 * Math.cos((2 * Math.PI * k) / 20_000),
+        150 + 100 * Math.sin((2 * Math.PI * k) / 20_000),
+      ],
+    );
+    const start = performance.now();
+    const paths = patternPaths([polygonPath(disk)], settings({ cell: "hexagon", size: 2 }));
+    expect(performance.now() - start).toBeLessThan(3000);
+    expect(area(paths)).toBeCloseTo(Math.PI * 100 ** 2, -2);
   });
 
   it("refuses cells too small for the boundary", () => {

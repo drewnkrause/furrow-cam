@@ -16,6 +16,7 @@ import {
 } from "../geometry/clipper";
 import { DEFAULT_CHORD_TOLERANCE, flattenPath } from "../geometry/flatten";
 import { cleanPath, polygonPath } from "../geometry/path";
+import { roundCoordinate } from "../geometry/round";
 import { cellLattice, cellLines, type Lattice, lineStep, voronoiCells } from "./cells";
 
 /**
@@ -64,7 +65,16 @@ export function patternPaths(
 
   if (LINE_PATTERN_CELLS.includes(settings.cell)) {
     const lines = (cellLines(settings, local, tolerance) ?? []).map((line) => line.map(toStock));
-    return clipLines(lines, region).flatMap((line) => cleanPath(polygonPath(line, false)) ?? []);
+    // A line lying along the boundary is kept on some edges and not others by
+    // the clipper; none is part of the fill.
+    const edges = region.map(containmentIn);
+    const alongEdge = ([a, b]: Point[]) =>
+      a !== undefined &&
+      b !== undefined &&
+      edges.some((ring) => ring([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]) === "on");
+    return clipLines(lines, region).flatMap((line) =>
+      alongEdge(line) ? [] : (cleanPath(polygonPath(line, false)) ?? []),
+    );
   }
 
   const lattice = cellLattice(settings, tolerance);
@@ -87,7 +97,11 @@ function placementFrame({ position: [px, py], rotation, mirrored }: TextPlacemen
   const angle = (rotation * Math.PI) / 180;
   const [c, s, m] = [Math.cos(angle), Math.sin(angle), mirrored ? -1 : 1];
   return {
-    toStock: ([x, y]: Point): Point => [px + c * m * x - s * y, py + s * m * x + c * y],
+    // Rounded as imported coordinates are, as a text item's outlines (ADR-0059).
+    toStock: ([x, y]: Point): Point => [
+      roundCoordinate(px + c * m * x - s * y),
+      roundCoordinate(py + s * m * x + c * y),
+    ],
     toLocal: ([x, y]: Point): Point => {
       const [dx, dy] = [x - px, y - py];
       return [m * (c * dx + s * dy), -s * dx + c * dy];
@@ -130,59 +144,85 @@ function tile({ a, b, motif }: Lattice, bounds: Rect): Polygon[] {
 }
 
 /**
- * The rings of `cells` inside `region`, each cell cut on its own. Cells far
- * from the region's edges are kept or dropped whole, found through a grid of
- * `bucket` squares marking where the edges run, so only the cells the
- * boundary crosses go through the clipper.
+ * The rings of `cells` inside `region`, each cell cut on its own, outer
+ * boundaries counter-clockwise. Cells away from the region's edges are kept
+ * or dropped whole, found through a grid of `bucket` squares: those the edges
+ * run through, and areas of the others flood-filled inside or outside with one
+ * containment test each. Only the cells the boundary crosses go through the
+ * clipper.
  */
 function cutCells(cells: Polygon[], region: Polygon[], bucket: number): Polygon[] {
   const bounds = pointsBounds(region.flat());
-  const key = (x: number, y: number) =>
-    Math.floor((x - bounds.min[0]) / bucket) * 0x100000 + Math.floor((y - bounds.min[1]) / bucket);
-  const edges = new Set<number>();
+  // A bucket of margin all round holds the edges' neighbours.
+  const [ox, oy] = [bounds.min[0] - bucket, bounds.min[1] - bucket];
+  const nx = Math.floor((bounds.max[0] - ox) / bucket) + 2;
+  const ny = Math.floor((bounds.max[1] - oy) / bucket) + 2;
+  const column = (x: number) => Math.floor((x - ox) / bucket);
+  const row = (y: number) => Math.floor((y - oy) / bucket);
+  const UNKNOWN = 0;
+  const INSIDE = 1;
+  const OUTSIDE = 2;
+  const EDGE = 3;
+  const grid = new Uint8Array(nx * ny);
+  const mark = (i: number, j: number) => {
+    if (i >= 0 && j >= 0 && i < nx && j < ny) grid[i * ny + j] = EDGE;
+  };
   for (const ring of region) {
     ring.forEach((p, k) => {
       const q = ring[(k + 1) % ring.length] as Point;
       // Samples half a bucket apart, each marking its bucket's neighbours too,
       // mark every bucket the edge runs through.
-      const steps = Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1]) / (bucket / 2));
+      const steps = Math.max(1, Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1]) / (bucket / 2)));
       for (let n = 0; n <= steps; n++) {
-        const [x, y] = [p[0] + ((q[0] - p[0]) * n) / steps, p[1] + ((q[1] - p[1]) * n) / steps];
-        for (const dx of [-bucket, 0, bucket]) {
-          for (const dy of [-bucket, 0, bucket]) edges.add(key(x + dx, y + dy));
-        }
+        const i = column(p[0] + ((q[0] - p[0]) * n) / steps);
+        const j = row(p[1] + ((q[1] - p[1]) * n) / steps);
+        for (const di of [-1, 0, 1]) for (const dj of [-1, 0, 1]) mark(i + di, j + dj);
       }
     });
   }
   const contains = region.map(containmentIn);
-  const inside = (point: Point) =>
-    contains.filter((ring) => ring(point) === "inside").length % 2 === 1;
+  /** Whether the bucket at `(i, j)`, which no edge runs through, is inside the region. */
+  const inside = (i: number, j: number): boolean => {
+    if (i < 0 || j < 0 || i >= nx || j >= ny) return false;
+    if (grid[i * ny + j] === UNKNOWN) {
+      const center: Point = [ox + (i + 0.5) * bucket, oy + (j + 0.5) * bucket];
+      const count = contains.filter((ring) => ring(center) === "inside").length;
+      const status = count % 2 === 1 ? INSIDE : OUTSIDE;
+      const stack = [i * ny + j];
+      grid[i * ny + j] = status;
+      for (let at = stack.pop(); at !== undefined; at = stack.pop()) {
+        const [ai, aj] = [Math.floor(at / ny), at % ny];
+        for (const [bi, bj] of [
+          [ai - 1, aj],
+          [ai + 1, aj],
+          [ai, aj - 1],
+          [ai, aj + 1],
+        ] as const) {
+          if (bi < 0 || bj < 0 || bi >= nx || bj >= ny || grid[bi * ny + bj] !== UNKNOWN) continue;
+          grid[bi * ny + bj] = status;
+          stack.push(bi * ny + bj);
+        }
+      }
+    }
+    return grid[i * ny + j] === INSIDE;
+  };
 
   const kept: Polygon[] = [];
   const crossing: Polygon[][] = [];
   for (const cell of cells) {
-    const box = pointsBounds(cell);
-    if (
-      box.max[0] < bounds.min[0] ||
-      box.max[1] < bounds.min[1] ||
-      box.min[0] > bounds.max[0] ||
-      box.min[1] > bounds.max[1]
-    ) {
-      continue;
-    }
-    if (crossesEdges(box)) crossing.push([cell]);
-    else if (inside(cell[0] as Point)) kept.push(cell);
-  }
-  return [...kept, ...intersectionEach(crossing, region).flat()];
-
-  function crossesEdges({ min, max }: Rect): boolean {
-    for (let x = min[0]; x < max[0] + bucket; x += bucket) {
-      for (let y = min[1]; y < max[1] + bucket; y += bucket) {
-        if (edges.has(key(Math.min(x, max[0]), Math.min(y, max[1])))) return true;
+    const { min, max } = pointsBounds(cell);
+    let crosses = false;
+    for (let i = column(min[0]); i <= column(max[0]) && !crosses; i++) {
+      for (let j = row(min[1]); j <= row(max[1]) && !crosses; j++) {
+        crosses = i >= 0 && j >= 0 && i < nx && j < ny && grid[i * ny + j] === EDGE;
       }
     }
-    return false;
+    if (crosses) crossing.push([cell]);
+    // A mirrored placement turns cells clockwise; the clipper gives the others counter-clockwise.
+    else if (inside(column(min[0]), row(min[1])))
+      kept.push(signedArea(cell) < 0 ? cell.toReversed() : cell);
   }
+  return [...kept, ...intersectionEach(crossing, region).flat()];
 }
 
 function pointsBounds(points: readonly Point[]): Rect {

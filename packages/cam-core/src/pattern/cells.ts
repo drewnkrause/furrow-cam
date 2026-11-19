@@ -186,8 +186,9 @@ export function voronoiCells({ size: s, seed }: PatternSettings, bounds: Rect): 
     (j + 0.15 + 0.7 * random(seed, i, j, 1)) * s,
   ];
   const cells: Polygon[] = [];
-  const [i0, j0] = [Math.floor(bounds.min[0] / s) - 1, Math.floor(bounds.min[1] / s) - 1];
-  const [i1, j1] = [Math.ceil(bounds.max[0] / s), Math.ceil(bounds.max[1] / s)];
+  // A site two columns or rows out can still own a point at the bounds' edge.
+  const [i0, j0] = [Math.floor(bounds.min[0] / s) - 2, Math.floor(bounds.min[1] / s) - 2];
+  const [i1, j1] = [Math.ceil(bounds.max[0] / s) + 1, Math.ceil(bounds.max[1] / s) + 1];
   for (let i = i0; i <= i1; i++) {
     for (let j = j0; j <= j1; j++) {
       const p = site(i, j);
