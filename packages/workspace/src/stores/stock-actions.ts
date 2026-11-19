@@ -385,19 +385,6 @@ export function setHoldingTabsFullHeight(store: DocumentStore, fullHeight: boole
   });
 }
 
-/**
- * How many holding tabs each model has, for the "Tabs per model" count: the
- * tabs over the models' outlines, rounded, so exact when every model has the
- * same number; `HOLDING_TABS_PER_MODEL` without tabs or models.
- */
-export function holdingTabsPerModel(document: ProjectDocument): number {
-  const tabs = document.stock.tabs?.positions.length ?? 0;
-  const outlines = modelOutlines(document.models).length;
-  return tabs > 0 && outlines > 0
-    ? Math.max(1, Math.round(tabs / outlines))
-    : HOLDING_TABS_PER_MODEL;
-}
-
 /** Replaces the holding tabs with `count` spread round each model's outline. */
 export function autoPlaceHoldingTabs(store: DocumentStore, count: number) {
   const { models } = store.getState().document;

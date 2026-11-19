@@ -22,6 +22,7 @@ import {
   type Point,
   type ProfileOperation,
   ProfileParams,
+  type ProfileSide,
   type ProfileStartPoint,
   type ProfileTabs,
   type ProjectDocument,
@@ -657,9 +658,9 @@ function updateParams<T extends Operation["type"]>(
 export const DEFAULT_TAB_COUNT = 4;
 
 /** The operation's shapes, in its order, with only the paths it targets. */
-function operationShapes(document: ProjectDocument, operation: Operation): Shape[] {
-  const shapes = new Map(document.geometry.map((shape) => [shape.id, shape]));
-  return targetedShapes(shapes, operation.targets);
+function operationShapes(geometry: readonly Shape[], targets: Operation["targets"]): Shape[] {
+  const shapes = new Map(geometry.map((shape) => [shape.id, shape]));
+  return targetedShapes(shapes, targets);
 }
 
 /**
@@ -671,21 +672,23 @@ export function defaultTabs(document: ProjectDocument, operation: ProfileOperati
     width: 6,
     height: Math.min(3, operation.params.depth / 2),
     fullHeight: false,
-    positions: autoTabPositions(operationShapes(document, operation), operation.params.side, {
-      count: DEFAULT_TAB_COUNT,
-    }),
+    positions: autoTabPositions(
+      operationShapes(document.geometry, operation.targets),
+      operation.params.side,
+      {
+        count: DEFAULT_TAB_COUNT,
+      },
+    ),
   };
 }
 
-/**
- * How many tabs a profile has on each contour, for its "Auto place" count:
- * the tabs over the contours, rounded, so exact when every contour has the
- * same number; `DEFAULT_TAB_COUNT` without tabs or contours.
- */
-export function tabsPerContour(document: ProjectDocument, operation: ProfileOperation): number {
-  const tabs = operation.params.tabs?.positions.length ?? 0;
-  const contours = tabContours(operationShapes(document, operation), operation.params.side).length;
-  return tabs > 0 && contours > 0 ? Math.max(1, Math.round(tabs / contours)) : DEFAULT_TAB_COUNT;
+/** How many contours "Auto place" puts tabs on for a profile on `side` of `targets` in `geometry`. */
+export function tabContourCount(
+  geometry: readonly Shape[],
+  targets: Operation["targets"],
+  side: ProfileSide,
+): number {
+  return tabContours(operationShapes(geometry, targets), side).length;
 }
 
 /** The profile `id`'s tabs, if it is a profile with tabs. */
@@ -720,7 +723,7 @@ export function autoPlaceTabs(
     return { ok: false, error: { code: "workspace.noTabs" } };
   }
   const positions = autoTabPositions(
-    operationShapes(document, operation),
+    operationShapes(document.geometry, operation.targets),
     operation.params.side,
     placement,
   );
