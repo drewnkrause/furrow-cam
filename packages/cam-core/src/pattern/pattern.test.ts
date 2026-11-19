@@ -178,6 +178,12 @@ describe("patternPaths", () => {
     }
   });
 
+  it("fills round a small hole in a large panel, where blocks lie wholly inside the outline", () => {
+    const panel = [polygonPath(rect(0, 0, 400, 400)), polygonPath(rect(190, 190, 20, 20))];
+    const paths = patternPaths(panel, settings({ size: 5 }));
+    expect(area(paths)).toBeCloseTo(400 * 400 - 20 * 20, 6);
+  });
+
   it("stays fast inside a boundary of many vertices", () => {
     const disk = Array.from(
       { length: 20_000 },
