@@ -571,11 +571,12 @@
       "tooManyFonts": "プロジェクトに含められるフォントは{max}個までです",
       "unknownShape": "不明な図形 ID",
       "unknownPath": "不明なパス",
+      "pathIndices": "パスのインデックスは昇順で、それぞれ 1 回だけにしてください",
+      "openBoundaryPath": "パターンは閉じたパスだけを塗りつぶします",
       "pinHolesThrough": "止まり穴のピン穴は素材の内側で終わる必要があります",
       "tabsThickerThanSide": "保持タブは部品の周囲を切削する深さより薄くする必要があります"
     },
     "operation": {
-      "pathIndices": "パスのインデックスは昇順で、それぞれ 1 回だけにしてください",
       "allowanceZeroOnLine": "ライン上では 0 にしてください",
       "overcutsOnLine": "ライン上では使えません",
       "plungeWithTabs": "保持タブとは併用できません",

@@ -13,7 +13,7 @@ import {
   uploadedFont,
 } from "../fixtures";
 import { createProjectDocument, ProjectDocument, Stock, StockAnchor, XYOrigin } from "./document";
-import type { PatternSettings, TextSettings } from "./geometry";
+import type { Path, PatternSettings, TextSettings } from "./geometry";
 import { DrillOperation, type Operation } from "./operation";
 
 describe("ProjectDocument", () => {
@@ -149,6 +149,18 @@ describe("ProjectDocument", () => {
         message: "document.unknownPath",
       }),
     ]);
+    const open: Path = { start: [0, 0], segments: [{ kind: "line", to: [5, 0] }], closed: false };
+    const withOpen = withPattern.geometry.map((shape) =>
+      shape.id === SQUARE_ID ? { ...shape, paths: [...shape.paths, open] } : shape,
+    );
+    expect(issues(boundary([{ shapeId: SQUARE_ID, paths: [0, 1] }]), withOpen)).toEqual([
+      expect.objectContaining({
+        path: ["drawings", 1, "pattern", "boundary", 0, "paths", 1],
+        message: "document.openBoundaryPath",
+      }),
+    ]);
+    // A whole shape's open paths are ignored.
+    expect(issues({}, withOpen)).toBeUndefined();
     expect(issues(boundary([{ shapeId: second.id, paths: null }]))).toEqual([
       expect.objectContaining({ message: "document.unknownShape" }),
     ]);

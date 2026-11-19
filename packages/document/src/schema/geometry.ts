@@ -129,7 +129,7 @@ export const ShapePaths = z.strictObject({
     .array(z.int().nonnegative())
     .min(1)
     .refine((paths) => paths.every((path, i) => i === 0 || path > (paths[i - 1] as number)), {
-      message: "operation.pathIndices",
+      message: "document.pathIndices",
     })
     .nullable(),
 });
@@ -244,7 +244,10 @@ export const PatternSettings = z.strictObject({
    * the boundary's drawing, so the cells follow it without changing size.
    */
   placement: TextPlacement,
-  /** The closed paths it fills, all of one other drawing, counted even-odd (P1). */
+  /**
+   * The paths it fills, all of one other drawing, counted even-odd (P1). Paths
+   * picked by index are closed; a whole shape's open paths are ignored.
+   */
   boundary: z.array(ShapePaths).min(1),
 });
 export type PatternSettings = z.infer<typeof PatternSettings>;

@@ -571,11 +571,12 @@
       "tooManyFonts": "Um projeto contém no máximo {max} fontes",
       "unknownShape": "ID de forma desconhecido",
       "unknownPath": "Caminho desconhecido",
+      "pathIndices": "Os índices dos caminhos devem ser crescentes, cada um uma vez",
+      "openBoundaryPath": "Um padrão só preenche caminhos fechados",
       "pinHolesThrough": "Furos cegos de pinos devem terminar dentro do material",
       "tabsThickerThanSide": "As pontes de fixação devem ser mais finas que a profundidade cortada ao redor da peça"
     },
     "operation": {
-      "pathIndices": "Os índices dos caminhos devem ser crescentes, cada um uma vez",
       "allowanceZeroOnLine": "Deve ser 0 sobre a linha",
       "overcutsOnLine": "Não sobre a linha",
       "plungeWithTabs": "Não com pontes de fixação",

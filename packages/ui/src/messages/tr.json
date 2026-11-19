@@ -571,11 +571,12 @@
       "tooManyFonts": "Bir projede en fazla {max} yazı tipi olabilir",
       "unknownShape": "Bilinmeyen şekil kimliği",
       "unknownPath": "Bilinmeyen yol",
+      "pathIndices": "Yol indeksleri artan sırada olmalı ve her biri bir kez geçmelidir",
+      "openBoundaryPath": "Bir desen yalnızca kapalı yolları doldurur",
       "pinHolesThrough": "Kör pim delikleri ham malzemenin içinde bitmelidir",
       "tabsThickerThanSide": "Tutucu köprüler parçanın çevresinde kesilen derinlikten ince olmalıdır"
     },
     "operation": {
-      "pathIndices": "Yol indeksleri artan sırada olmalı ve her biri bir kez geçmelidir",
       "allowanceZeroOnLine": "Çizgi üzerinde 0 olmalıdır",
       "overcutsOnLine": "Çizgi üzerinde olamaz",
       "plungeWithTabs": "Tutma köprüleriyle olmaz",

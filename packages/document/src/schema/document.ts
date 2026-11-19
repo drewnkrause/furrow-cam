@@ -265,17 +265,17 @@ export const ProjectDocument = z
       shapeCounts.set(drawing.id, 0);
     });
 
-    /** Each shape's number of paths, by id. */
-    const pathCounts = new Map<string, number>();
+    /** Each shape, by id. */
+    const shapes = new Map<string, Shape>();
     doc.geometry.forEach((shape, i) => {
-      if (pathCounts.has(shape.id)) {
+      if (shapes.has(shape.id)) {
         ctx.addIssue({
           code: "custom",
           path: ["geometry", i, "id"],
           message: "document.duplicateShape",
         });
       }
-      pathCounts.set(shape.id, shape.paths.length);
+      shapes.set(shape.id, shape);
       const count = shapeCounts.get(shape.drawingId);
       if (count === undefined) {
         ctx.addIssue({
@@ -303,14 +303,26 @@ export const ProjectDocument = z
       }
     });
 
-    const shapeDrawings = new Map(doc.geometry.map((shape) => [shape.id, shape.drawingId]));
     const patterns = new Set(doc.drawings.filter((d) => d.pattern).map((d) => d.id));
     doc.drawings.forEach(({ pattern }, i) => {
       if (!pattern) return;
       const path = ["drawings", i, "pattern", "boundary"];
-      refineShapePaths(pattern.boundary, path, pathCounts, ctx);
+      refineShapePaths(pattern.boundary, path, shapes, ctx);
       // Its paths are one other drawing's, never a pattern's, so patterns never chain.
-      const drawings = new Set(pattern.boundary.map(({ shapeId }) => shapeDrawings.get(shapeId)));
+      pattern.boundary.forEach(({ shapeId, paths }, j) => {
+        paths?.forEach((index, k) => {
+          if (shapes.get(shapeId)?.paths[index]?.closed === false) {
+            ctx.addIssue({
+              code: "custom",
+              path: [...path, j, "paths", k],
+              message: "document.openBoundaryPath",
+            });
+          }
+        });
+      });
+      const drawings = new Set(
+        pattern.boundary.map(({ shapeId }) => shapes.get(shapeId)?.drawingId),
+      );
       drawings.delete(undefined);
       const [drawing] = drawings;
       if (drawings.size > 1 || (drawing !== undefined && patterns.has(drawing))) {
@@ -377,19 +389,19 @@ export const ProjectDocument = z
           message: "document.unknownModel",
         });
       }
-      refineShapePaths(operation.targets, ["operations", i, "targets"], pathCounts, ctx);
+      refineShapePaths(operation.targets, ["operations", i, "targets"], shapes, ctx);
     });
   });
 export type ProjectDocument = z.infer<typeof ProjectDocument>;
 
 /**
  * Checks that `selections`, at `path`, name each shape once, and only shapes
- * and paths `pathCounts` (each shape's number of paths) holds.
+ * and paths that `shapes` (by id) holds.
  */
 function refineShapePaths(
   selections: readonly ShapePaths[],
   path: (string | number)[],
-  pathCounts: ReadonlyMap<string, number>,
+  shapes: ReadonlyMap<string, Shape>,
   ctx: z.RefinementCtx,
 ) {
   const seen = new Set<string>();
@@ -402,7 +414,7 @@ function refineShapePaths(
       });
     }
     seen.add(shapeId);
-    const count = pathCounts.get(shapeId);
+    const count = shapes.get(shapeId)?.paths.length;
     if (count === undefined) {
       ctx.addIssue({
         code: "custom",

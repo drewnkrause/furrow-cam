@@ -571,11 +571,12 @@
       "tooManyFonts": "Un proyecto contiene como máximo {max} fuentes",
       "unknownShape": "Id de forma desconocido",
       "unknownPath": "Trazado desconocido",
+      "pathIndices": "Los índices de trazado deben ser ascendentes y aparecer una vez",
+      "openBoundaryPath": "Un patrón solo rellena trazados cerrados",
       "pinHolesThrough": "Los agujeros ciegos de los pasadores deben terminar dentro del material",
       "tabsThickerThanSide": "Los puentes de sujeción deben ser más finos que la profundidad que se corta alrededor de la pieza"
     },
     "operation": {
-      "pathIndices": "Los índices de trazado deben ser ascendentes y aparecer una vez",
       "allowanceZeroOnLine": "Debe ser 0 sobre la línea",
       "overcutsOnLine": "No sobre la línea",
       "plungeWithTabs": "No con puentes de sujeción",

@@ -571,11 +571,12 @@
       "tooManyFonts": "A project holds at most {max} fonts",
       "unknownShape": "Unknown shape id",
       "unknownPath": "Unknown path",
+      "pathIndices": "Path indices must be ascending, each once",
+      "openBoundaryPath": "A pattern fills closed paths only",
       "pinHolesThrough": "Blind pin holes must end inside the stock",
       "tabsThickerThanSide": "Holding tabs must be thinner than the depth cut round the part"
     },
     "operation": {
-      "pathIndices": "Path indices must be ascending, each once",
       "allowanceZeroOnLine": "Must be 0 on the line",
       "overcutsOnLine": "Not on the line",
       "plungeWithTabs": "Not with holding tabs",
