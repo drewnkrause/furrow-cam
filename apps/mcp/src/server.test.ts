@@ -65,6 +65,7 @@ describe("the MCP server", () => {
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       "add_drill",
       "add_engrave",
+      "add_pattern",
       "add_pocket",
       "add_profile",
       "add_relief_finish",
