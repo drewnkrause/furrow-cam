@@ -1,6 +1,7 @@
 import type { Point } from "@furrow/document";
 import {
   booleanOpWithPolyTree,
+  Clipper64,
   FillRule as ClipperFillRule,
   ClipType,
   difference as clipDifference,
@@ -12,9 +13,11 @@ import {
   JoinType,
   type Path64,
   type Paths64,
+  PathType,
   PointInPolygonResult,
   type PolyPath64,
   PolyTree64,
+  ReuseableDataContainer64,
   simplifyPaths,
 } from "clipper2-ts";
 import { DEFAULT_CHORD_TOLERANCE } from "./flatten";
@@ -133,6 +136,46 @@ export function intersection(
   fillRule: FillRule = "nonZero",
 ): Polygon[] {
   return fromPaths(clipIntersect(toPaths(subject), toPaths(clip), FILL_RULES[fillRule]));
+}
+
+/**
+ * Each of `subjects` intersected with `clip` on its own, so subjects that
+ * touch or overlap stay apart: the pieces of each are one entry of the
+ * result, in order. `clip` is converted once for all of them.
+ */
+export function intersectionEach(
+  subjects: Polygon[][],
+  clip: Polygon[],
+  fillRule: FillRule = "nonZero",
+): Polygon[][] {
+  const clipData = new ReuseableDataContainer64();
+  clipData.addPaths(toPaths(clip), PathType.Clip, false);
+  return subjects.map((subject) => {
+    const clipper = new Clipper64();
+    clipper.addReuseableData(clipData);
+    clipper.addSubject(toPaths(subject));
+    const solution: Paths64 = [];
+    clipper.execute(ClipType.Intersection, FILL_RULES[fillRule], solution);
+    return fromPaths(solution);
+  });
+}
+
+/**
+ * The parts of the open polylines `lines` that lie inside `clip`, each an open
+ * polyline ending on `clip`'s rings.
+ */
+export function clipLines(
+  lines: Point[][],
+  clip: Polygon[],
+  fillRule: FillRule = "nonZero",
+): Point[][] {
+  const clipper = new Clipper64();
+  clipper.addOpenSubject(toPaths(lines));
+  clipper.addClip(toPaths(clip));
+  const closed: Paths64 = [];
+  const open: Paths64 = [];
+  clipper.execute(ClipType.Intersection, FILL_RULES[fillRule], closed, open);
+  return fromPaths(open);
 }
 
 /**
