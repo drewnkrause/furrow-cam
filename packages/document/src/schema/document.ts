@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { MAX_PROJECT_FONTS, ProjectFont } from "./font";
-import { Drawing, Point, Shape } from "./geometry";
+import { Drawing, Point, Shape, type ShapePaths } from "./geometry";
 import { GcodeBlock, Machine } from "./machine";
 import { Model, Sha256 } from "./model";
 import { Operation, operationModelId } from "./operation";
 import { PositiveLength, Units } from "./units";
 
-export const CURRENT_SCHEMA_VERSION = 41;
+export const CURRENT_SCHEMA_VERSION = 42;
 
 /** The 9 stock points an XY zero can sit on: corners, edge midpoints and the centre. */
 export const StockAnchor = z.enum([
@@ -294,6 +294,27 @@ export const ProjectDocument = z
       } else if (drawing.text && count !== 1) {
         // Its outlines are one shape, which operations target across edits (ADR-0059).
         ctx.addIssue({ code: "custom", path: ["drawings", i], message: "document.textShapes" });
+      } else if (drawing.pattern && count !== 1) {
+        // Its cells are one shape, which operations target across regenerations (ADR-0087).
+        ctx.addIssue({ code: "custom", path: ["drawings", i], message: "document.patternShapes" });
+      }
+      if (drawing.text && drawing.pattern) {
+        ctx.addIssue({ code: "custom", path: ["drawings", i], message: "document.textAndPattern" });
+      }
+    });
+
+    const shapeDrawings = new Map(doc.geometry.map((shape) => [shape.id, shape.drawingId]));
+    const patterns = new Set(doc.drawings.filter((d) => d.pattern).map((d) => d.id));
+    doc.drawings.forEach(({ pattern }, i) => {
+      if (!pattern) return;
+      const path = ["drawings", i, "pattern", "boundary"];
+      refineShapePaths(pattern.boundary, path, pathCounts, ctx);
+      // Its paths are one other drawing's, never a pattern's, so patterns never chain.
+      const drawings = new Set(pattern.boundary.map(({ shapeId }) => shapeDrawings.get(shapeId)));
+      drawings.delete(undefined);
+      const [drawing] = drawings;
+      if (drawings.size > 1 || (drawing !== undefined && patterns.has(drawing))) {
+        ctx.addIssue({ code: "custom", path, message: "document.patternBoundary" });
       }
     });
 
@@ -356,38 +377,51 @@ export const ProjectDocument = z
           message: "document.unknownModel",
         });
       }
-      const seen = new Set<string>();
-      operation.targets.forEach(({ shapeId, paths }, j) => {
-        if (seen.has(shapeId)) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["operations", i, "targets", j, "shapeId"],
-            message: "document.duplicateShape",
-          });
-        }
-        seen.add(shapeId);
-        const count = pathCounts.get(shapeId);
-        if (count === undefined) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["operations", i, "targets", j, "shapeId"],
-            message: "document.unknownShape",
-          });
-          return;
-        }
-        paths?.forEach((path, k) => {
-          if (path >= count) {
-            ctx.addIssue({
-              code: "custom",
-              path: ["operations", i, "targets", j, "paths", k],
-              message: "document.unknownPath",
-            });
-          }
-        });
-      });
+      refineShapePaths(operation.targets, ["operations", i, "targets"], pathCounts, ctx);
     });
   });
 export type ProjectDocument = z.infer<typeof ProjectDocument>;
+
+/**
+ * Checks that `selections`, at `path`, name each shape once, and only shapes
+ * and paths `pathCounts` (each shape's number of paths) holds.
+ */
+function refineShapePaths(
+  selections: readonly ShapePaths[],
+  path: (string | number)[],
+  pathCounts: ReadonlyMap<string, number>,
+  ctx: z.RefinementCtx,
+) {
+  const seen = new Set<string>();
+  selections.forEach(({ shapeId, paths }, j) => {
+    if (seen.has(shapeId)) {
+      ctx.addIssue({
+        code: "custom",
+        path: [...path, j, "shapeId"],
+        message: "document.duplicateShape",
+      });
+    }
+    seen.add(shapeId);
+    const count = pathCounts.get(shapeId);
+    if (count === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: [...path, j, "shapeId"],
+        message: "document.unknownShape",
+      });
+      return;
+    }
+    paths?.forEach((index, k) => {
+      if (index >= count) {
+        ctx.addIssue({
+          code: "custom",
+          path: [...path, j, "paths", k],
+          message: "document.unknownPath",
+        });
+      }
+    });
+  });
+}
 
 /**
  * The hashes of the project assets `document` references, each once: its

@@ -3,6 +3,8 @@ import {
   fullDocument,
   model,
   OPERATION_ID,
+  patternItem,
+  patternShape,
   reliefFinish,
   reliefRough,
   SQUARE_ID,
@@ -11,7 +13,7 @@ import {
   uploadedFont,
 } from "../fixtures";
 import { createProjectDocument, ProjectDocument, Stock, StockAnchor, XYOrigin } from "./document";
-import type { TextSettings } from "./geometry";
+import type { PatternSettings, TextSettings } from "./geometry";
 import { DrillOperation, type Operation } from "./operation";
 
 describe("ProjectDocument", () => {
@@ -116,6 +118,67 @@ describe("ProjectDocument", () => {
     }
     expect(ProjectDocument.safeParse(text({ font: "" })).success).toBe(false);
     expect(ProjectDocument.safeParse(text({ align: "justify" })).success).toBe(false);
+  });
+
+  it("accepts patterns with one shape and a boundary of one other drawing", () => {
+    const doc = fullDocument();
+    const withPattern = {
+      ...doc,
+      drawings: [...doc.drawings, patternItem],
+      geometry: [...doc.geometry, patternShape],
+    };
+    expect(ProjectDocument.parse(withPattern)).toEqual(withPattern);
+    const issues = (changes: object, geometry = withPattern.geometry) =>
+      ProjectDocument.safeParse({
+        ...withPattern,
+        drawings: [...doc.drawings, { ...patternItem, ...changes }],
+        geometry,
+      }).error?.issues;
+    const second = { ...patternShape, id: "f5a6b7c8-d9e0-4f1a-b2c3-d4e5f6a7b8c9" };
+    expect(issues({}, [...withPattern.geometry, second])).toEqual([
+      expect.objectContaining({ path: ["drawings", 1], message: "document.patternShapes" }),
+    ]);
+    expect(issues({ text: textItem.text })).toEqual([
+      expect.objectContaining({ path: ["drawings", 1], message: "document.textAndPattern" }),
+    ]);
+    const settings = patternItem.pattern as PatternSettings;
+    const boundary = (selections: object[]) => ({ pattern: { ...settings, boundary: selections } });
+    expect(issues(boundary([{ shapeId: SQUARE_ID, paths: [1] }]))).toEqual([
+      expect.objectContaining({
+        path: ["drawings", 1, "pattern", "boundary", 0, "paths", 0],
+        message: "document.unknownPath",
+      }),
+    ]);
+    expect(issues(boundary([{ shapeId: second.id, paths: null }]))).toEqual([
+      expect.objectContaining({ message: "document.unknownShape" }),
+    ]);
+    // Its own cells, or another pattern's, can't bound it.
+    expect(issues(boundary([{ shapeId: patternShape.id, paths: null }]))).toEqual([
+      expect.objectContaining({
+        path: ["drawings", 1, "pattern", "boundary"],
+        message: "document.patternBoundary",
+      }),
+    ]);
+    // Nor can two drawings' paths.
+    const withText = {
+      ...withPattern,
+      drawings: [...doc.drawings, textItem, patternItem],
+      geometry: [...withPattern.geometry, textShape],
+    };
+    const both = [
+      { shapeId: SQUARE_ID, paths: null },
+      { shapeId: textShape.id, paths: null },
+    ];
+    expect(
+      ProjectDocument.safeParse({
+        ...withText,
+        drawings: [...doc.drawings, textItem, { ...patternItem, ...boundary(both) }],
+      }).error?.issues,
+    ).toEqual([expect.objectContaining({ message: "document.patternBoundary" })]);
+    expect(issues({ pattern: { ...settings, boundary: [] } })).toHaveLength(1);
+    expect(issues({ pattern: { ...settings, cell: "spiral" } })).toHaveLength(1);
+    expect(issues({ pattern: { ...settings, size: 0 } })).toHaveLength(1);
+    expect(issues({ pattern: { ...settings, gap: -1 } })).toHaveLength(1);
   });
 
   it("accepts uploaded fonts that text uses, and rejects duplicates, unknown ones and too many", () => {
