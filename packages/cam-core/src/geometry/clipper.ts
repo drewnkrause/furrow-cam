@@ -139,15 +139,11 @@ export function intersection(
 }
 
 /**
- * Each of `subjects` intersected with `clip` on its own, so subjects that
+ * Each of `subjects` intersected with `clip` (non-zero) on its own, so subjects that
  * touch or overlap stay apart: the pieces of each are one entry of the
  * result, in order. `clip` is converted once for all of them.
  */
-export function intersectionEach(
-  subjects: Polygon[][],
-  clip: Polygon[],
-  fillRule: FillRule = "nonZero",
-): Polygon[][] {
+export function intersectionEach(subjects: Polygon[][], clip: Polygon[]): Polygon[][] {
   const clipData = new ReuseableDataContainer64();
   clipData.addPaths(toPaths(clip), PathType.Clip, false);
   return subjects.map((subject) => {
@@ -155,26 +151,22 @@ export function intersectionEach(
     clipper.addReuseableData(clipData);
     clipper.addSubject(toPaths(subject));
     const solution: Paths64 = [];
-    clipper.execute(ClipType.Intersection, FILL_RULES[fillRule], solution);
+    clipper.execute(ClipType.Intersection, ClipperFillRule.NonZero, solution);
     return fromPaths(solution);
   });
 }
 
 /**
- * The parts of the open polylines `lines` that lie inside `clip`, each an open
+ * The parts of the open polylines `lines` that lie inside `clip` (non-zero), each an open
  * polyline ending on `clip`'s rings.
  */
-export function clipLines(
-  lines: Point[][],
-  clip: Polygon[],
-  fillRule: FillRule = "nonZero",
-): Point[][] {
+export function clipLines(lines: Point[][], clip: Polygon[]): Point[][] {
   const clipper = new Clipper64();
   clipper.addOpenSubject(toPaths(lines));
   clipper.addClip(toPaths(clip));
-  const closed: Paths64 = [];
+  // Clipper2 wants a closed solution even when the subjects are all open.
   const open: Paths64 = [];
-  clipper.execute(ClipType.Intersection, FILL_RULES[fillRule], closed, open);
+  clipper.execute(ClipType.Intersection, ClipperFillRule.NonZero, [], open);
   return fromPaths(open);
 }
 

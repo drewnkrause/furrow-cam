@@ -176,8 +176,8 @@ describe("booleans", () => {
     expect(pieces.map(totalArea)).toEqual([50, 50, 0]);
   });
 
-  it("clips open lines, which end on the clip's rings, even-odd", () => {
-    const frame = [rect(0, 0, 100, 100), rect(20, 20, 60, 60)];
+  it("clips open lines, which end on the clip's rings", () => {
+    const frame = [rect(0, 0, 100, 100), rect(20, 20, 60, 60).toReversed()];
     const lines = clipLines(
       [
         [
@@ -186,7 +186,6 @@ describe("booleans", () => {
         ],
       ],
       frame,
-      "evenOdd",
     );
     const ends = lines.map((line) => line.map(([x]) => x).sort((a, b) => a - b));
     expect(ends.sort((a, b) => (a[0] as number) - (b[0] as number))).toEqual([
