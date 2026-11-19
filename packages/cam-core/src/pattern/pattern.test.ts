@@ -48,7 +48,7 @@ function inFrame([x, y]: Point): boolean {
 describe("patternPaths", () => {
   it.each(PatternCell.options)("fills the frame with %s, inside it and its hole empty", (cell) => {
     const paths = patternPaths(frame, settings({ cell, gap: 1 }));
-    expect(paths.length).toBeGreaterThanOrEqual(5);
+    expect(paths.length).toBeGreaterThanOrEqual(10);
     expect(points(paths).every(inFrame)).toBe(true);
     const line = LINE_PATTERN_CELLS.includes(cell);
     expect(paths.every((path) => path.closed === !line)).toBe(true);
@@ -124,20 +124,37 @@ describe("patternPaths", () => {
     }
   });
 
-  it("leaves out lines lying along the boundary's edges", () => {
-    const box = [polygonPath(rect(0, 0, 100, 80))];
-    for (const cell of ["lines", "crosshatch"] as const) {
-      const paths = patternPaths(box, settings({ cell }));
-      const along = paths.filter((path) => {
-        const [a, b] = flattenPath(path) as [Point, Point];
-        return (
-          (a[0] === b[0] && (a[0] === 0 || a[0] === 100)) ||
-          (a[1] === b[1] && (a[1] === 0 || a[1] === 80))
-        );
+  it("leaves out lines lying along the boundary's edges, outer or inner, keeping the rest", () => {
+    const e = 1e-2;
+    /** Whether `a` to `b` runs along an edge of the frame or its hole. */
+    const along = ([a, b]: Point[]) => {
+      if (!a || !b) return false;
+      const [mx, my] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      const near = (v: number, w: number) => Math.abs(v - w) < e;
+      const flat = near(a[1], b[1]);
+      const upright = near(a[0], b[0]);
+      return (
+        (flat &&
+          (near(my, 0) ||
+            near(my, 80) ||
+            ((near(my, 30) || near(my, 50)) && mx > 40 && mx < 60))) ||
+        (upright &&
+          (near(mx, 0) || near(mx, 100) || ((near(mx, 40) || near(mx, 60)) && my > 30 && my < 50)))
+      );
+    };
+    const segments = (paths: Path[]) =>
+      paths.flatMap((path) => {
+        const line = flattenPath(path);
+        return line.slice(1).map((to, k) => [line[k] as Point, to]);
       });
-      expect(along).toEqual([]);
-      expect(paths).toHaveLength(cell === "lines" ? 7 : 7 + 9);
-    }
+    const lines = patternPaths(frame, settings({ cell: "lines" }));
+    // y = 10, 20, 60 and 70 whole; 30, 40 and 50 either side of the hole.
+    expect(lines).toHaveLength(10);
+    expect(segments(lines).filter(along)).toEqual([]);
+    const hatch = patternPaths(frame, settings({ cell: "crosshatch" }));
+    // And x = 10 to 90, those at 40, 50 and 60 either side of the hole.
+    expect(hatch).toHaveLength(10 + 12);
+    expect(segments(hatch).filter(along)).toEqual([]);
   });
 
   it("winds every closed cell's outline counter-clockwise, mirrored or not, at rounded coordinates", () => {

@@ -1,4 +1,5 @@
 import {
+  GEOMETRY_TOLERANCE,
   LINE_PATTERN_CELLS,
   type Path,
   type PatternSettings,
@@ -65,15 +66,10 @@ export function patternPaths(
 
   if (LINE_PATTERN_CELLS.includes(settings.cell)) {
     const lines = (cellLines(settings, local, tolerance) ?? []).map((line) => line.map(toStock));
-    // A line lying along the boundary is kept on some edges and not others by
-    // the clipper; none is part of the fill.
-    const edges = region.map(containmentIn);
-    const alongEdge = ([a, b]: Point[]) =>
-      a !== undefined &&
-      b !== undefined &&
-      edges.some((ring) => ring([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]) === "on");
-    return clipLines(lines, region).flatMap((line) =>
-      alongEdge(line) ? [] : (cleanPath(polygonPath(line, false)) ?? []),
+    // A line lying along an edge would be kept on some edges and not others by
+    // the clipper: cut a hair inside, so none is, and lines end that close to it.
+    return clipLines(lines, offset(region, -GEOMETRY_TOLERANCE)).flatMap(
+      (line) => cleanPath(polygonPath(line, false)) ?? [],
     );
   }
 
