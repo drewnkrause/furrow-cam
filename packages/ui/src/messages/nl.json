@@ -571,11 +571,12 @@
       "tooManyFonts": "Een project bevat hoogstens {max} lettertypen",
       "unknownShape": "Onbekende vorm-id",
       "unknownPath": "Onbekend pad",
+      "pathIndices": "Padindexen moeten oplopend zijn, elk één keer",
+      "openBoundaryPath": "Een patroon vult alleen gesloten paden",
       "pinHolesThrough": "Blinde pengaten moeten binnen het materiaal eindigen",
       "tabsThickerThanSide": "Houdbruggen moeten dunner zijn dan de diepte die rond het werkstuk wordt gefreesd"
     },
     "operation": {
-      "pathIndices": "Padindexen moeten oplopend zijn, elk één keer",
       "allowanceZeroOnLine": "Moet 0 zijn op de lijn",
       "overcutsOnLine": "Niet op de lijn",
       "plungeWithTabs": "Niet met houdbruggen",

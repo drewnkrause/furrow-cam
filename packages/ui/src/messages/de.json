@@ -571,11 +571,12 @@
       "tooManyFonts": "Ein Projekt enthält höchstens {max} Schriften",
       "unknownShape": "Unbekannte Form-ID",
       "unknownPath": "Unbekannter Pfad",
+      "pathIndices": "Pfadindizes müssen aufsteigend sein, jeder einmal",
+      "openBoundaryPath": "Ein Muster füllt nur geschlossene Pfade",
       "pinHolesThrough": "Sacklöcher für die Stifte müssen im Rohteil enden",
       "tabsThickerThanSide": "Haltestege müssen dünner sein als die Tiefe, die um das Teil geschnitten wird"
     },
     "operation": {
-      "pathIndices": "Pfadindizes müssen aufsteigend sein, jeder einmal",
       "allowanceZeroOnLine": "Muss auf der Linie 0 sein",
       "overcutsOnLine": "Nicht auf der Linie",
       "plungeWithTabs": "Nicht mit Haltestegen",

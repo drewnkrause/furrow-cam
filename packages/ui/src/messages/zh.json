@@ -571,11 +571,12 @@
       "tooManyFonts": "一个项目最多包含{max}种字体",
       "unknownShape": "未知的形状ID",
       "unknownPath": "未知的路径",
+      "pathIndices": "路径索引必须升序排列，且每个只出现一次",
+      "openBoundaryPath": "图案只能填充闭合路径",
       "pinHolesThrough": "盲孔定位销孔必须止于毛坯内部",
       "tabsThickerThanSide": "保留桥必须比工件周围的切削深度薄"
     },
     "operation": {
-      "pathIndices": "路径索引必须升序排列，且每个只出现一次",
       "allowanceZeroOnLine": "在线上加工时必须为0",
       "overcutsOnLine": "不能在线上",
       "plungeWithTabs": "不能与固定桥同时使用",

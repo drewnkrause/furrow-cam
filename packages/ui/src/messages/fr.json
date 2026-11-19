@@ -571,11 +571,12 @@
       "tooManyFonts": "Un projet contient au plus {max} polices",
       "unknownShape": "Identifiant de forme inconnu",
       "unknownPath": "Tracé inconnu",
+      "pathIndices": "Les indices de tracé doivent être croissants, chacun une fois",
+      "openBoundaryPath": "Un motif ne remplit que des tracés fermés",
       "pinHolesThrough": "Les trous borgnes des pions doivent s'arrêter dans le brut",
       "tabsThickerThanSide": "Les attaches doivent être plus fines que la profondeur coupée autour de la pièce"
     },
     "operation": {
-      "pathIndices": "Les indices de tracé doivent être croissants, chacun une fois",
       "allowanceZeroOnLine": "Doit être 0 sur la ligne",
       "overcutsOnLine": "Pas sur la ligne",
       "plungeWithTabs": "Pas avec des attaches",
