@@ -408,6 +408,8 @@ export const migrations: Readonly<Record<number, Migration>> = {
     }
     return doc;
   },
+  // #621: drawings can be patterns (ADR-0087). Existing documents have none.
+  41: (doc) => doc,
 };
 
 /** Thrown when a document can't be upgraded to the current schema version. */

@@ -183,6 +183,11 @@ export function setTextItem(
     // By index: finding it through the draft would read every shape.
     const target = draft.geometry[index];
     if (target) target.paths = paths;
+    // Patterns bounded by some of its paths take all of them too (ADR-0087).
+    const selections = draft.drawings.flatMap((d) => d.pattern?.boundary ?? []);
+    for (const own of selections) {
+      if (own.shapeId === shape.id && own.paths !== null) own.paths = null;
+    }
     for (const operation of draft.operations) {
       for (const own of operation.targets) {
         if (own.shapeId === shape.id && own.paths !== null) own.paths = null;
@@ -787,6 +792,12 @@ export function removeDrawing(store: DocumentStore, id: string) {
       draft.geometry.filter((shape) => shape.drawingId === id).map((shape) => shape.id),
     );
     draft.geometry = draft.geometry.filter((shape) => !removed.has(shape.id));
+    // A pattern it bounded becomes a plain drawing with the cells it had (ADR-0087, P8).
+    for (const drawing of draft.drawings) {
+      if (drawing.pattern?.boundary.some(({ shapeId }) => removed.has(shapeId))) {
+        delete drawing.pattern;
+      }
+    }
     draft.operations = draft.operations.filter((operation) => {
       const targets = operation.targets.filter(({ shapeId }) => !removed.has(shapeId));
       if (targets.length === operation.targets.length) return true;

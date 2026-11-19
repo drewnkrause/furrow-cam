@@ -23,6 +23,7 @@ import type * as React from "react";
 import { useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import { useLength } from "../hooks/use-length";
+import { useTabCount } from "../hooks/use-tab-count";
 import { ANCHOR_GRID, type ZeroChoice, zeroChoiceInDirection } from "../lib/anchor-grid";
 import type { MachineChoice } from "../lib/workspace-host";
 import { useWorkspaceHost } from "../providers/workspace-host";
@@ -44,7 +45,7 @@ import {
   addLocatingPin,
   addTouchOff,
   autoPlaceHoldingTabs,
-  holdingTabsPerModel,
+  HOLDING_TABS_PER_MODEL,
   partingDepthLimits,
   removeTouchOff,
   type StockDimension,
@@ -218,16 +219,13 @@ function HoldingTabsSection() {
   const store = useDocumentStoreApi();
   const units = useDocumentStore((s) => s.document.units);
   const stock = useDocumentStore((s) => s.document.stock);
-  const hasModels = useDocumentStore((s) => s.document.models.length > 0);
   const { tabs } = stock;
-  // The tabs per model, until the user types another count; again once the number of tabs
-  // changes, not on every frame of a drag.
-  const [count, setCount] = useState(() => holdingTabsPerModel(store.getState().document));
-  const [counted, setCounted] = useState(tabs?.positions.length);
-  if (counted !== tabs?.positions.length) {
-    setCounted(tabs?.positions.length);
-    setCount(holdingTabsPerModel(store.getState().document));
-  }
+  const models = useDocumentStore((s) => s.document.models.length);
+  const [count, setCount] = useTabCount(
+    tabs?.positions.length ?? 0,
+    models,
+    HOLDING_TABS_PER_MODEL,
+  );
   // What a thickness was refused against: once either changes, it may fit.
   const [refused, setRefused] = useState<{ depth: number; tabs: HoldingTabs } | null>(null);
   const t = useTranslations("Stock");
@@ -235,7 +233,7 @@ function HoldingTabsSection() {
   const depth = holdingTabsDepth(stock);
   const tooThick = refused !== null && refused.depth === depth && refused.tabs === tabs;
   // Only 3D operations leave them; tabs already on stay visible so they can be turned off.
-  if (!hasModels && !tabs) return null;
+  if (models === 0 && !tabs) return null;
 
   return (
     <section aria-labelledby="holding-tabs-heading" className="grid gap-2">

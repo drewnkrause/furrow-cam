@@ -54,7 +54,7 @@ Decorative fills (honeycomb, waves, fish scales, crosshatch, Voronoi cells) are 
 
 ## Decision record
 
-To be decided in a new ADR (ADR-0087): how a pattern is stored (its settings and a reference to its boundary's paths in `Drawing.pattern`, its derived paths as its one shape, as a text item, ADR-0059), how operations keep targeting it when it regenerates, what anchors the pattern to its boundary, and where the generation runs (a cam-core module, `pattern/`, called from a worker).
+ADR-0087 decides how a pattern is stored (its settings and a reference to its boundary's paths in `Drawing.pattern`, its derived paths as its one shape, as a text item, ADR-0059), how operations keep targeting it when it regenerates, what anchors the pattern to its boundary, and where the generation runs (a cam-core module, `pattern/`, called from a worker).
 
 ## Success criteria
 
@@ -63,9 +63,10 @@ To be decided in a new ADR (ADR-0087): how a pattern is stored (its settings and
 
 ## Open questions
 
-- A pattern drawn across several drawings' paths (a boundary made of two imported files): allowed, or one drawing only as P1 says?
-- Should the pattern's cells be merged into one shape, or each cell its own shape, so an operation can target a part of the pattern?
+- ~~A pattern drawn across several drawings' paths: allowed, or one drawing only as P1 says?~~ One drawing only (ADR-0087).
+- ~~Should the pattern's cells be merged into one shape, or each cell its own shape?~~ One shape, which operations keep targeting across regenerations (ADR-0087).
 
 ## Changelog
 
 - 2026-11-19: created
+- 2026-11-19: open questions answered by ADR-0087
