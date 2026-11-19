@@ -1,13 +1,7 @@
 "use client";
 
-import { flattenPath, MIN_LENGTH, pathBounds, patternPaths } from "@furrow/cam-core";
-import {
-  type Path,
-  PatternCell,
-  type PatternSettings,
-  type Point,
-  type Shape,
-} from "@furrow/document";
+import { flattenPath, MIN_LENGTH, patternPaths } from "@furrow/cam-core";
+import { type Path, PatternCell, type PatternSettings, type Point } from "@furrow/document";
 import { NumberField } from "@furrow/ui/components/number-field";
 import { Button } from "@furrow/ui/components/ui/button";
 import { useFormatMessage } from "@furrow/ui/hooks/use-format-message";
@@ -26,7 +20,7 @@ import {
   type PatternEdits,
   patternSettled,
 } from "../lib/pattern-items";
-import { boundaryPaths, DEFAULT_PATTERN } from "../lib/patterns";
+import { boundaryCorner, DEFAULT_PATTERN } from "../lib/patterns";
 import {
   useDocumentStore,
   useDocumentStoreApi,
@@ -105,7 +99,10 @@ export function PatternProperties({
   const t = useTranslations("Pattern");
   const format = useFormatMessage();
   const { gestures, pending } = useSettledGestures(() => patternSettled(drawingId));
-  const corner = useMemo(() => boundaryCorner(geometry, pattern), [geometry, pattern]);
+  const corner = useMemo(
+    () => boundaryCorner(geometry, pattern.boundary),
+    [geometry, pattern.boundary],
+  );
 
   async function edit(edits: PatternEdits) {
     if (pending.current) await pending.current;
@@ -234,13 +231,6 @@ export function PatternProperties({
       )}
     </section>
   );
-}
-
-/** The bottom-left corner of `pattern`'s boundary, which its offset counts from (ADR-0087). */
-function boundaryCorner(geometry: readonly Shape[], pattern: PatternSettings): Point {
-  const boxes = boundaryPaths(geometry, pattern.boundary).map(pathBounds);
-  if (boxes.length === 0) return [0, 0];
-  return [Math.min(...boxes.map(({ min }) => min[0])), Math.min(...boxes.map(({ min }) => min[1]))];
 }
 
 /** The side of the square a thumbnail fills, in millimetres. */

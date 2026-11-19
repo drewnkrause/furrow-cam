@@ -1,5 +1,5 @@
-import { PatternTooDenseError, patternPaths } from "@furrow/cam-core";
-import type { Message, Path, PatternSettings, Shape, ShapePaths } from "@furrow/document";
+import { PatternTooDenseError, pathBounds, patternPaths } from "@furrow/cam-core";
+import type { Message, Path, PatternSettings, Point, Shape, ShapePaths } from "@furrow/document";
 
 /** A new pattern's settings but its placement and boundary, the same in the workspace and the MCP server (PRD-0016 P10). */
 export const DEFAULT_PATTERN: Omit<PatternSettings, "placement" | "boundary"> = {
@@ -29,6 +29,16 @@ export function boundaryPaths(geometry: readonly Shape[], boundary: readonly Sha
     const indices = byId.get(shape.id);
     return indices ? indices.flatMap((i) => shape.paths[i] ?? []) : shape.paths;
   });
+}
+
+/**
+ * The bottom-left corner of the paths `boundary` selects in `geometry`: where a
+ * new pattern's origin goes, and what its offset counts from (ADR-0087).
+ */
+export function boundaryCorner(geometry: readonly Shape[], boundary: readonly ShapePaths[]): Point {
+  const boxes = boundaryPaths(geometry, boundary).map(pathBounds);
+  if (boxes.length === 0) return [0, 0];
+  return [Math.min(...boxes.map(({ min }) => min[0])), Math.min(...boxes.map(({ min }) => min[1]))];
 }
 
 export type Generated = { ok: true; paths: Path[] } | { ok: false; error: Message };

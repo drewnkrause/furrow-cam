@@ -1,5 +1,4 @@
-import { pathBounds } from "@furrow/cam-core";
-import type { Message, OperationTarget, PatternSettings, Point, Shape } from "@furrow/document";
+import type { Message, OperationTarget, PatternSettings, Shape } from "@furrow/document";
 import type { DocumentStore } from "../stores/document-store";
 import type { ActionResult } from "../stores/operation-actions";
 import {
@@ -9,6 +8,7 @@ import {
   setPatternItem,
 } from "../stores/pattern-actions";
 import {
+  boundaryCorner,
   boundaryPaths,
   DEFAULT_PATTERN,
   type Generated,
@@ -32,11 +32,7 @@ export async function addPattern(
     const { document } = store.getState();
     const bound = patternBoundary(document, targets);
     if (!bound.ok) return bound;
-    const paths = boundaryPaths(document.geometry, bound.boundary);
-    const corner: Point = [
-      Math.min(...paths.map((path) => pathBounds(path).min[0])),
-      Math.min(...paths.map((path) => pathBounds(path).min[1])),
-    ];
+    const corner = boundaryCorner(document.geometry, bound.boundary);
     const settings: PatternSettings = {
       ...DEFAULT_PATTERN,
       placement: { position: corner, rotation: 0, mirrored: false },
