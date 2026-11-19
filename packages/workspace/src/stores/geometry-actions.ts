@@ -4,6 +4,7 @@ import {
   DEFAULT_CHORD_TOLERANCE,
   drawingFit,
   holeSnapTargets,
+  mapPlacement,
   mapShapes,
   mapText,
   mirrorPoint,
@@ -32,6 +33,7 @@ import {
   type Message,
   type Operation,
   type Path,
+  type PatternSettings,
   type Point,
   type ProfileStartPoint,
   type ProjectDocument,
@@ -41,6 +43,8 @@ import {
   segmentIssue,
   type TextSettings,
 } from "@furrow/document";
+import type { Draft } from "immer";
+import { generatePattern } from "../lib/patterns";
 import { FONT_REMOVED } from "../lib/text-layout";
 import type { DocumentStore } from "./document-store";
 import { modelAnchor } from "./model-actions";
@@ -116,13 +120,13 @@ function placeDrawing(
   const [bx, by] = anchorPoint(bounds, anchor);
   const offset: Point = [x - bx, y - by];
   const moved = { ...drawing };
-  moveTextWithOutlines(moved, (point) => translatePoint(point, offset));
+  moveSettingsWithShapes(moved, (point) => translatePoint(point, offset));
   addDrawing(store, name, moved, translateShapes(shapes, offset));
   return true;
 }
 
 /** Adds `drawing` and its `shapes`, as they are, as one undo step. */
-function addDrawing(store: DocumentStore, name: string, drawing: Drawing, shapes: Shape[]) {
+export function addDrawing(store: DocumentStore, name: string, drawing: Drawing, shapes: Shape[]) {
   // One assignment, not a spread push: a file may hold more shapes than a call takes arguments.
   const geometry = store.getState().document.geometry.concat(shapes);
   store.getState().change(name, (draft) => {
@@ -158,46 +162,79 @@ export function setTextItem(
   ) {
     return { ok: false, error: FONT_REMOVED };
   }
-  const [shape] = drawingShapes(document.geometry, id);
-  if (!shape || !document.drawings.some((drawing) => drawing.id === id && drawing.text)) {
+  if (!document.drawings.some((drawing) => drawing.id === id && drawing.text)) {
     return { ok: true, removedTabs: 0 };
   }
+  const derived = derivedPathsChange(document, id, paths);
+  if (!derived) return { ok: true, removedTabs: 0 };
+  store.getState().change("setText", (draft) => {
+    const drawing = draft.drawings.find((d) => d.id === id);
+    if (drawing) Object.assign(drawing, { name: textName(text.text), text });
+    derived.apply(draft);
+  });
+  return { ok: true, removedTabs: derived.removedTabs };
+}
+
+/**
+ * The change that sets the paths of drawing `id`'s one shape, a text item's
+ * outlines or a pattern's cells, to `paths`, derived again from its settings
+ * (ADR-0059, ADR-0087). The shape keeps its id, so the operations machining
+ * it still do; their targets listing some of its paths take all of them, as do
+ * pattern boundaries on them, since the old paths' numbers mean nothing in the
+ * new ones. The profile tabs on its old paths, first moved by `move` when it
+ * moved too, stay if they lie on the new ones and go otherwise:
+ * `removedTabs` counts them. `null` if it has no shape.
+ */
+export function derivedPathsChange(
+  document: ProjectDocument,
+  id: string,
+  paths: Path[],
+  move: (point: Point) => Point = (point) => point,
+): { removedTabs: number; apply: (draft: Draft<ProjectDocument>) => void } | null {
+  const [shape] = drawingShapes(document.geometry, id);
+  if (!shape) return null;
   const index = document.geometry.indexOf(shape);
   const loops = closedLoops([{ ...shape, paths }]);
   const onOutlines = (position: Point) =>
     (nearestOnLoops(loops, position)?.distance ?? Infinity) <= TAB_ON_OUTLINE;
+  /** Which of each profile's tabs lie on its old paths. */
+  const markers = new Map(
+    [...drawingMarkers(document, id)].map(([operationId, { tabs }]) => [operationId, tabs]),
+  );
   /** Which tabs of each profile go: those on the old paths and off the new ones. */
   const gone = new Map(
-    [...drawingMarkers(document, id)].map(([operationId, { tabs: own }]) => {
+    [...markers].map(([operationId, own]) => {
       const operation = document.operations.find((candidate) => candidate.id === operationId);
       const positions =
         operation?.type === "profile" ? (operation.params.tabs?.positions ?? []) : [];
-      return [operationId, own.map((mine, i) => mine && !onOutlines(positions[i] as Point))];
+      return [operationId, own.map((mine, i) => mine && !onOutlines(move(positions[i] as Point)))];
     }),
   );
   let removedTabs = 0;
   for (const flags of gone.values()) removedTabs += flags.filter(Boolean).length;
-  store.getState().change("setText", (draft) => {
-    const drawing = draft.drawings.find((d) => d.id === id);
-    if (drawing) Object.assign(drawing, { name: textName(text.text), text });
-    // By index: finding it through the draft would read every shape.
-    const target = draft.geometry[index];
-    if (target) target.paths = paths;
-    // Patterns bounded by some of its paths take all of them too (ADR-0087).
-    const selections = draft.drawings.flatMap((d) => d.pattern?.boundary ?? []);
-    for (const own of selections) {
-      if (own.shapeId === shape.id && own.paths !== null) own.paths = null;
-    }
-    for (const operation of draft.operations) {
-      for (const own of operation.targets) {
+  return {
+    removedTabs,
+    apply: (draft) => {
+      // By index: finding it through the draft would read every shape. A new
+      // object, as the draft's geometry may hold the frozen shape itself.
+      draft.geometry[index] = { ...shape, paths };
+      const selections = draft.drawings.flatMap((d) => d.pattern?.boundary ?? []);
+      for (const own of selections) {
         if (own.shapeId === shape.id && own.paths !== null) own.paths = null;
       }
-      const flags = gone.get(operation.id);
-      const tabs = operation.type === "profile" ? operation.params.tabs : null;
-      if (flags?.some(Boolean) && tabs) tabs.positions = tabs.positions.filter((_, i) => !flags[i]);
-    }
-  });
-  return { ok: true, removedTabs };
+      for (const operation of draft.operations) {
+        for (const own of operation.targets) {
+          if (own.shapeId === shape.id && own.paths !== null) own.paths = null;
+        }
+        const tabs = operation.type === "profile" ? operation.params.tabs : null;
+        if (!tabs) continue;
+        const mine = markers.get(operation.id) ?? [];
+        tabs.positions = tabs.positions.map((position, i) => (mine[i] ? move(position) : position));
+        const flags = gone.get(operation.id);
+        if (flags?.some(Boolean)) tabs.positions = tabs.positions.filter((_, i) => !flags[i]);
+      }
+    },
+  };
 }
 
 /** The shapes of drawing `id`. */
@@ -379,12 +416,16 @@ function drawingHoles(document: ProjectDocument, id: string): (point: Point) => 
 }
 
 /**
- * Keeps text item `drawing`'s placement on its outlines once `move` has
- * rewritten their points (ADR-0059). Every change to a text item's points
- * calls it with the same move, in the same undo step.
+ * Keeps a text item's or a pattern's placement on its shapes once `move` has
+ * rewritten their points (ADR-0059, ADR-0087). Every change that moves all of
+ * a text item's or a pattern's points calls it with the same move, in the
+ * same undo step.
  */
-export function moveTextWithOutlines(drawing: Drawing, move: (point: Point) => Point) {
+export function moveSettingsWithShapes(drawing: Drawing, move: (point: Point) => Point) {
   if (drawing.text) drawing.text = mapText(drawing.text, move);
+  if (drawing.pattern) {
+    drawing.pattern = { ...drawing.pattern, ...mapPlacement(drawing.pattern.placement, move) };
+  }
 }
 
 /** Whether a segment of `shapes` has no length, or an arc no radius (`segmentIssue`). */
@@ -406,6 +447,8 @@ type Transform = {
   shapes: (shapes: Shape[]) => Shape[];
   point: (point: Point) => Point;
   rotation?: (degrees: number) => number;
+  /** Whether it mirrors, which flips arcs' direction (`mapShapes`). */
+  mirrored?: boolean;
 };
 
 /**
@@ -421,39 +464,118 @@ function transformDrawing(
   transform: Transform,
 ): ActionResult {
   const { document } = store.getState();
+  const drawing = document.drawings.find((d) => d.id === id);
+  if (drawing?.pattern) return transformPattern(store, name, drawing, drawing.pattern, transform);
   const shapes = drawingShapes(document.geometry, id);
   if (shapes.length === 0) return { ok: true };
   const rewritten = transform.shapes(shapes);
   if (degenerate(rewritten)) return { ok: false, error: TOO_SMALL };
   const byId = new Map(rewritten.map((shape) => [shape.id, shape]));
   // One assignment, not one per shape, as on import.
+  const boundaries = document.geometry.map((shape) => byId.get(shape.id) ?? shape);
+
+  // The patterns it bounds follow it (ADR-0087): moved, turned and mirrored
+  // with it, or generated again inside it when it is scaled, keeping their
+  // cells' size.
+  const own = new Set(shapes.map((shape) => shape.id));
+  const followers = new Map<string, PatternSettings>();
+  const moved = [id];
+  const regenerated: NonNullable<ReturnType<typeof derivedPathsChange>>[] = [];
+  for (const follower of document.drawings) {
+    const pattern = follower.pattern;
+    if (!pattern?.boundary.some(({ shapeId }) => own.has(shapeId))) continue;
+    const { placement, scale } = mapPlacement(pattern.placement, transform.point);
+    const settings = { ...pattern, placement };
+    followers.set(follower.id, settings);
+    if (Math.abs(scale - 1) < 1e-9) {
+      const cells = drawingShapes(document.geometry, follower.id);
+      for (const cell of mapShapes(cells, transform.point, transform.mirrored ?? false)) {
+        byId.set(cell.id, cell);
+      }
+      moved.push(follower.id);
+      continue;
+    }
+    const generated = generatePattern(boundaries, settings);
+    if (!generated.ok) return generated;
+    const change = derivedPathsChange(document, follower.id, generated.paths, transform.point);
+    if (change) regenerated.push(change);
+  }
+
   const geometry = document.geometry.map((shape) => byId.get(shape.id) ?? shape);
-  const markers = drawingMarkers(document, id, true);
+  const markers = moved.map((movedId) => drawingMarkers(document, movedId, true));
   store.getState().change(name, (draft) => {
     draft.geometry = geometry;
-    const drawing = draft.drawings.find((d) => d.id === id);
-    if (drawing) {
-      moveTextWithOutlines(drawing, transform.point);
-      if (transform.rotation)
-        drawing.rotation = normalizeDegrees(transform.rotation(drawing.rotation));
+    for (const d of draft.drawings) {
+      const settings = followers.get(d.id);
+      if (d.id !== id && !settings) continue;
+      if (d.id === id) moveSettingsWithShapes(d, transform.point);
+      else if (settings) d.pattern = settings;
+      if (transform.rotation) d.rotation = normalizeDegrees(transform.rotation(d.rotation));
     }
-    for (const operation of draft.operations) {
-      const moved = markers.get(operation.id);
-      const move = (positions: Point[], own: boolean[]) =>
-        positions.forEach((position, i) => {
-          if (own[i]) positions[i] = transform.point(position);
-        });
-      if (moved && operation.type === "drill") move(operation.params.points, moved.holes);
-      if (!moved || (operation.type !== "profile" && operation.type !== "engrave")) continue;
-      if (operation.type === "profile" && operation.params.tabs) {
-        move(operation.params.tabs.positions, moved.tabs);
-      }
-      if (operation.type === "profile" && operation.params.cornerOvercuts) {
-        move(operation.params.cornerOvercuts.excluded, moved.overcuts);
-      }
-      const params: StartPointParams = operation.params;
-      params.startPoints = moveStartPoints(params.startPoints, transform.point, moved.startPoints);
+    for (const ofDrawing of markers) moveMarkers(draft, ofDrawing, transform.point);
+    for (const change of regenerated) change.apply(draft);
+  });
+  return { ok: true };
+}
+
+/** Moves the markers in `markers` (`drawingMarkers`) with `move`. */
+function moveMarkers(
+  draft: Draft<ProjectDocument>,
+  markers: Map<string, OwnMarkers>,
+  point: (point: Point) => Point,
+) {
+  for (const operation of draft.operations) {
+    const moved = markers.get(operation.id);
+    const move = (positions: Point[], own: boolean[]) =>
+      positions.forEach((position, i) => {
+        if (own[i]) positions[i] = point(position);
+      });
+    if (moved && operation.type === "drill") move(operation.params.points, moved.holes);
+    if (!moved || (operation.type !== "profile" && operation.type !== "engrave")) continue;
+    if (operation.type === "profile" && operation.params.tabs) {
+      move(operation.params.tabs.positions, moved.tabs);
     }
+    if (operation.type === "profile" && operation.params.cornerOvercuts) {
+      move(operation.params.cornerOvercuts.excluded, moved.overcuts);
+    }
+    const params: StartPointParams = operation.params;
+    params.startPoints = moveStartPoints(params.startPoints, point, moved.startPoints);
+  }
+}
+
+/**
+ * Transforms pattern `drawing` on its own (ADR-0087): its placement maps with
+ * `transform`, a scale multiplying its cells' lengths but not its inset, and
+ * its cells are generated again inside the same boundary, as one undo step.
+ * Refuses, changing nothing, a pattern left with no cell.
+ */
+function transformPattern(
+  store: DocumentStore,
+  name: string,
+  drawing: Drawing,
+  pattern: PatternSettings,
+  transform: Transform,
+): ActionResult {
+  const { document } = store.getState();
+  const { placement, scale } = mapPlacement(pattern.placement, transform.point);
+  const settings: PatternSettings = {
+    ...pattern,
+    placement,
+    size: pattern.size * scale,
+    gap: pattern.gap * scale,
+    amplitude: pattern.amplitude * scale,
+    wavelength: pattern.wavelength * scale,
+  };
+  const generated = generatePattern(document.geometry, settings);
+  if (!generated.ok) return generated;
+  const change = derivedPathsChange(document, drawing.id, generated.paths, transform.point);
+  store.getState().change(name, (draft) => {
+    const d = draft.drawings.find(({ id }) => id === drawing.id);
+    if (d) {
+      d.pattern = settings;
+      if (transform.rotation) d.rotation = normalizeDegrees(transform.rotation(d.rotation));
+    }
+    change?.apply(draft);
   });
   return { ok: true };
 }
@@ -512,6 +634,7 @@ function orientDrawing(
     shapes: () => translateShapes(turned, back),
     point: (point) => translatePoint(move(point, centre), back),
     rotation,
+    mirrored,
   });
 }
 
@@ -734,9 +857,10 @@ export function duplicateDrawing(store: DocumentStore, id: string): string | nul
   const geometry = document.geometry.concat(copies);
   const markers = drawingMarkers(document, id, true);
   store.getState().change("duplicateDrawing", (draft) => {
-    const { hidden: _, locked: __, ...original } = drawing;
+    // A pattern's copy is a plain drawing: it would fill the same boundary (ADR-0087).
+    const { hidden: _, locked: __, pattern: ___, ...original } = drawing;
     const copy = { ...original, id: copyId };
-    moveTextWithOutlines(copy, (point) => translatePoint(point, offset));
+    moveSettingsWithShapes(copy, (point) => translatePoint(point, offset));
     draft.drawings.push(copy);
     draft.geometry = geometry;
     for (const operation of draft.operations) {
