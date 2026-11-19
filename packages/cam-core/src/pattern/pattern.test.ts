@@ -126,6 +126,10 @@ describe("patternPaths", () => {
 
   it("refuses cells too small for the boundary", () => {
     expect(() => patternPaths(frame, settings({ size: 0.1 }))).toThrow(PatternTooDenseError);
+    // Waves sampled too finely along their lines, though few.
+    const panel = [polygonPath(rect(0, 0, 300, 200))];
+    const fine = settings({ cell: "wave", size: 2, wavelength: 0.1 });
+    expect(() => patternPaths(panel, fine)).toThrow(PatternTooDenseError);
   });
 
   it("fills 300 × 200 mm with 5 mm hexagons within the time budget (P7)", () => {

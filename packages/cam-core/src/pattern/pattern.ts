@@ -16,11 +16,11 @@ import {
 } from "../geometry/clipper";
 import { DEFAULT_CHORD_TOLERANCE, flattenPath } from "../geometry/flatten";
 import { cleanPath, polygonPath } from "../geometry/path";
-import { cellLattice, cellLines, type Lattice, voronoiCells } from "./cells";
+import { cellLattice, cellLines, type Lattice, lineStep, voronoiCells } from "./cells";
 
 /**
  * The most cells a pattern may have, about `size²` each over the boundary's
- * bounds: well past the 10 000 a pattern must stay responsive with (P7), short
+ * bounds, or points of its lines: well past the 10 000 a pattern must stay responsive with (P7), short
  * of what would exhaust a worker's memory.
  */
 export const MAX_PATTERN_CELLS = 200_000;
@@ -55,10 +55,11 @@ export function patternPaths(
   if (region.length === 0) return [];
   const { toStock, toLocal } = placementFrame(settings.placement);
   const local = pointsBounds(region.flat().map(toLocal));
+  // Cells, or a line's points, about `size` apart across the rows and `lineStep` along them.
   const estimate =
     ((local.max[0] - local.min[0] + 2 * settings.size) *
       (local.max[1] - local.min[1] + 2 * settings.size)) /
-    settings.size ** 2;
+    (settings.size * Math.min(settings.size, lineStep(settings, tolerance)));
   if (estimate > MAX_PATTERN_CELLS) throw new PatternTooDenseError(estimate);
 
   if (LINE_PATTERN_CELLS.includes(settings.cell)) {

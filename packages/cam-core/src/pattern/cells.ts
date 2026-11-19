@@ -123,8 +123,7 @@ export function cellLines(
     case "wave": {
       const half = amplitude / 2;
       const k = (2 * Math.PI) / wavelength;
-      // A chord of length h strays at most half·k²·h²/8 from a sine.
-      const step = Math.min(wavelength / 8, Math.sqrt((8 * tolerance) / (half * k * k)));
+      const step = lineStep({ cell, size: s, amplitude, wavelength } as PatternSettings, tolerance);
       const xs = rows(step, x0, x1 + step);
       return rows(s, y0, y1).map((y) => xs.map((x): Point => [x, y + half * Math.sin(k * x)]));
     }
@@ -160,6 +159,21 @@ export function cellLines(
     default:
       return null;
   }
+}
+
+/**
+ * How far apart a line cell type's points lie along its lines: a wave's
+ * chords, a zigzag's corners; a cell's size for the others.
+ */
+export function lineStep(
+  { cell, size, amplitude, wavelength }: PatternSettings,
+  tolerance: number,
+): number {
+  if (cell === "zigzag") return wavelength / 2;
+  if (cell !== "wave") return size;
+  const k = (2 * Math.PI) / wavelength;
+  // A chord of length h strays at most (amplitude / 2)·k²·h²/8 from a sine.
+  return Math.min(wavelength / 8, Math.sqrt((16 * tolerance) / (amplitude * k * k)));
 }
 
 /**
