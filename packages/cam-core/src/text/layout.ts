@@ -5,7 +5,7 @@ import {
   type Segment,
   type TextSettings,
 } from "@furrow/document";
-import { pathBounds, type Rect } from "../geometry/bounds";
+import { joinRects, pathBounds, type Rect } from "../geometry/bounds";
 import { type FillRule, intersection, type Polygon, signedArea, union } from "../geometry/clipper";
 import { quadraticToCubic } from "../geometry/curve";
 import { flattenPath } from "../geometry/flatten";
@@ -140,11 +140,4 @@ function mergeOverlaps(all: Path[][]): Path[] {
 /** The area `rings` fill under `fillRule`, in mm². */
 function area(rings: Polygon[], fillRule: FillRule): number {
   return Math.abs(union(rings, fillRule).reduce((sum, ring) => sum + signedArea(ring), 0));
-}
-
-function joinRects(a: Rect, b: Rect): Rect {
-  return {
-    min: [Math.min(a.min[0], b.min[0]), Math.min(a.min[1], b.min[1])],
-    max: [Math.max(a.max[0], b.max[0]), Math.max(a.max[1], b.max[1])],
-  };
 }

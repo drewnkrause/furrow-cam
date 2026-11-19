@@ -6,9 +6,10 @@ import {
   type Point,
   type TextPlacement,
 } from "@furrow/document";
-import type { Rect } from "../geometry/bounds";
+import { joinRects, type Rect } from "../geometry/bounds";
 import {
   clipLines,
+  clipToRect,
   containmentIn,
   intersectionEach,
   offset,
@@ -26,6 +27,9 @@ import { cellLattice, cellLines, type Lattice, lineStep, voronoiCells } from "./
  * of what would exhaust a worker's memory.
  */
 export const MAX_PATTERN_CELLS = 200_000;
+
+/** Buckets across a block of cells cut together against the region near them (see `cutCells`). */
+const BLOCK = 8;
 
 /** Thrown when a pattern's cells are too small for its boundary to generate (see `MAX_PATTERN_CELLS`). */
 export class PatternTooDenseError extends RangeError {
@@ -204,7 +208,8 @@ function cutCells(cells: Polygon[], region: Polygon[], bucket: number): Polygon[
   };
 
   const kept: Polygon[] = [];
-  const crossing: Polygon[][] = [];
+  /** The cells crossing an edge, by block of `BLOCK × BLOCK` buckets, with their bounds. */
+  const crossing = new Map<number, { cells: Polygon[][]; bounds: Rect }>();
   for (const cell of cells) {
     const { min, max } = pointsBounds(cell);
     let crosses = false;
@@ -213,12 +218,26 @@ function cutCells(cells: Polygon[], region: Polygon[], bucket: number): Polygon[
         crosses = i >= 0 && j >= 0 && i < nx && j < ny && grid[i * ny + j] === EDGE;
       }
     }
-    if (crosses) crossing.push([cell]);
+    if (crosses) {
+      const block = Math.floor(column(min[0]) / BLOCK) * nx + Math.floor(row(min[1]) / BLOCK);
+      const group = crossing.get(block);
+      if (group) {
+        group.cells.push([cell]);
+        group.bounds = joinRects(group.bounds, { min, max });
+      } else {
+        crossing.set(block, { cells: [[cell]], bounds: { min, max } });
+      }
+    }
     // A mirrored placement turns cells clockwise; the clipper gives the others counter-clockwise.
     else if (inside(column(min[0]), row(min[1])))
       kept.push(signedArea(cell) < 0 ? cell.toReversed() : cell);
   }
-  return [...kept, ...intersectionEach(crossing, region).flat()];
+  // Each block's cells are cut by only the part of the region round them, so a
+  // detailed boundary isn't swept whole for every cell.
+  const cut = [...crossing.values()].flatMap(({ cells: group, bounds: near }) =>
+    intersectionEach(group, clipToRect(region, near)).flat(),
+  );
+  return [...kept, ...cut];
 }
 
 function pointsBounds(points: readonly Point[]): Rect {

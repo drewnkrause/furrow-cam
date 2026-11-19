@@ -2,6 +2,7 @@ import { distance, type Point } from "@furrow/document";
 import { describe, expect, it } from "vitest";
 import {
   clipLines,
+  clipToRect,
   containment,
   difference,
   intersection,
@@ -174,6 +175,13 @@ describe("booleans", () => {
       [rect(5, 0, 10, 10)],
     );
     expect(pieces.map(totalArea)).toEqual([50, 50, 0]);
+  });
+
+  it("cuts rings to a rectangle, holes keeping their winding", () => {
+    const frame = [rect(0, 0, 100, 100), rect(20, 20, 60, 60).toReversed()];
+    const cut = clipToRect(frame, { min: [-10, -10], max: [50, 50] });
+    // The frame's quarter, less the hole's.
+    expect(totalArea(cut)).toBeCloseTo(50 * 50 - 30 * 30, 6);
   });
 
   it("clips open lines, which end on the clip's rings", () => {

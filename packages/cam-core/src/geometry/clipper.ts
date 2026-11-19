@@ -17,9 +17,12 @@ import {
   PointInPolygonResult,
   type PolyPath64,
   PolyTree64,
+  Rect64Utils,
   ReuseableDataContainer64,
+  rectClip,
   simplifyPaths,
 } from "clipper2-ts";
+import type { Rect } from "./bounds";
 import { DEFAULT_CHORD_TOLERANCE } from "./flatten";
 
 // Geometry kernel adapter (ADR-0007, ADR-0015). The rest of the CAM core uses
@@ -154,6 +157,16 @@ export function intersectionEach(subjects: Polygon[][], clip: Polygon[]): Polygo
     clipper.execute(ClipType.Intersection, ClipperFillRule.NonZero, solution);
     return fromPaths(solution);
   });
+}
+
+/**
+ * The parts of `polygons` inside `rect`, each ring cut on its own and keeping
+ * its winding, so the area they cover under the non-zero rule is cut to the
+ * rectangle. Much faster than `intersection` with a rectangle.
+ */
+export function clipToRect(polygons: Polygon[], { min, max }: Rect): Polygon[] {
+  const [left, top] = [toPoint(min), toPoint(max)];
+  return fromPaths(rectClip(Rect64Utils.create(left.x, left.y, top.x, top.y), toPaths(polygons)));
 }
 
 /**
