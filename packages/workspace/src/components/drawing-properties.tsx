@@ -46,6 +46,7 @@ import {
 import { gestureHandlers } from "../stores/gesture-handlers";
 import { modelAnchor } from "../stores/model-actions";
 import type { ActionResult } from "../stores/operation-actions";
+import { PatternProperties } from "./pattern-properties";
 import { PROPERTIES_HEADER } from "./properties-header";
 import { TextProperties } from "./text-properties";
 
@@ -53,8 +54,8 @@ import { TextProperties } from "./text-properties";
  * The selected drawing's size and position (PRD-0009 D2, D3, D5, ADR-0055):
  * width and height, which keep its proportions, the border *Fit to stock*
  * leaves, mirroring and turning it (D6, D7), its position from the zero,
- * duplicating (D8) and removing it, each an undoable edit. A text item's
- * settings come first (PRD-0010).
+ * duplicating (D8) and removing it, each an undoable edit. A text item's or
+ * a pattern's settings come first (PRD-0010, PRD-0016).
  */
 export function DrawingProperties({ drawingId }: { drawingId: string }) {
   const store = useDocumentStoreApi();
@@ -110,6 +111,7 @@ export function DrawingProperties({ drawingId }: { drawingId: string }) {
       </div>
 
       {drawing.text && <TextProperties drawingId={drawing.id} text={drawing.text} />}
+      {drawing.pattern && <PatternProperties drawingId={drawing.id} pattern={drawing.pattern} />}
 
       <section aria-labelledby="drawing-size-heading" className="grid gap-2">
         <h3 id="drawing-size-heading" className="font-medium">

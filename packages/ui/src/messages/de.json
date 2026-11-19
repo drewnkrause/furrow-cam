@@ -822,7 +822,14 @@
       "terrainUnavailable": "Die Höhendaten konnten nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.",
       "inlayClosedPaths": "Wähle geschlossene Pfade aus, um daraus eine Einlage zu machen.",
       "inlayGap": "Der Leimspalt muss mindestens 0 und kleiner als die Taschentiefe sein.",
-      "inlayTooDeep": "Diese Einlage ist zu tief für den Kegel des V-Fräsers oder das Rohteil: Die Tasche muss im Kegel bleiben und der Boden des Einsatzes im Rohteil."
+      "inlayTooDeep": "Diese Einlage ist zu tief für den Kegel des V-Fräsers oder das Rohteil: Die Tasche muss im Kegel bleiben und der Boden des Einsatzes im Rohteil.",
+      "patternEmpty": "Keine Zelle passt in die Begrenzung: Zellen oder Einzug verkleinern.",
+      "patternTooDense": "Die Zellen sind für diese Begrenzung zu klein: vergrößern Sie sie.",
+      "patternFailed": "Das Muster konnte nicht erzeugt werden.",
+      "patternNoSelection": "Geschlossene Pfade einer Zeichnung zum Füllen auswählen.",
+      "patternOneDrawing": "Nur Pfade einer Zeichnung auswählen.",
+      "patternOfPattern": "Ein Muster kann nicht mit einem anderen gefüllt werden.",
+      "patternNoClosedPath": "Die Auswahl hat keinen geschlossenen Pfad zum Füllen."
     },
     "terrain": {
       "noArea": "Dieses Gebiet ist zu klein. Zeichne ein größeres.",
@@ -1727,5 +1734,47 @@
   },
   "NumberField": {
     "drag": "Seitlich ziehen zum Ändern"
+  },
+  "Pattern": {
+    "heading": "Muster",
+    "fill": "Muster",
+    "fillHint": "Die ausgewählten geschlossenen Pfade mit einem Muster füllen",
+    "filling": "Wird gefüllt…",
+    "defaultName": "Muster",
+    "cell": "Zelle",
+    "cells": {
+      "square": "Quadrate",
+      "brick": "Ziegel",
+      "hexagon": "Waben",
+      "triangle": "Dreiecke",
+      "diamond": "Rauten",
+      "circleSquare": "Kreise (quadratisches Raster)",
+      "circleHex": "Kreise (Sechseckraster)",
+      "lines": "Linien",
+      "crosshatch": "Kreuzschraffur",
+      "wave": "Wellen",
+      "zigzag": "Zickzack",
+      "herringbone": "Fischgrät",
+      "basketWeave": "Korbgeflecht",
+      "fishScale": "Fischschuppen",
+      "chevron": "Chevrons",
+      "star": "Sterne",
+      "truchet": "Truchet-Bögen",
+      "voronoi": "Voronoi-Zellen"
+    },
+    "size": "Zellgröße",
+    "gap": "Abstand",
+    "inset": "Einzug",
+    "amplitude": "Wellenhöhe",
+    "wavelength": "Wellenlänge",
+    "seed": "Startwert",
+    "rotation": "Drehung",
+    "offset": {
+      "x": "Versatz X",
+      "y": "Versatz Y"
+    },
+    "tabsRemoved": "{count, plural, one {# Haltesteg entfernt, der} other {# Haltestege entfernt, die}} nicht mehr auf den Zellen lagen.",
+    "convert": "In Zeichnung umwandeln",
+    "convertTitle": "Die Zellen als Zeichnung behalten, von denselben Operationen bearbeitet; sie folgt ihrer Begrenzung nicht mehr"
   }
 }

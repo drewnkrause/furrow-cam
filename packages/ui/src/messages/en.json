@@ -822,7 +822,14 @@
       "terrainUnavailable": "The elevation data couldn't be loaded. Check your connection and try again.",
       "inlayClosedPaths": "Select closed paths to make an inlay of.",
       "inlayGap": "The glue gap must be at least 0 and less than the pocket depth.",
-      "inlayTooDeep": "This inlay is too deep for the V-bit's cone or the stock: the pocket must stay within the cone and the plug's floor within the stock."
+      "inlayTooDeep": "This inlay is too deep for the V-bit's cone or the stock: the pocket must stay within the cone and the plug's floor within the stock.",
+      "patternEmpty": "No cell fits inside the boundary: make the cells or the inset smaller.",
+      "patternTooDense": "The cells are too small for this boundary: make them larger.",
+      "patternFailed": "The pattern couldn't be generated.",
+      "patternNoSelection": "Select closed paths of a drawing to fill.",
+      "patternOneDrawing": "Select paths of one drawing only.",
+      "patternOfPattern": "A pattern can't be filled with another.",
+      "patternNoClosedPath": "The selection has no closed path to fill."
     },
     "terrain": {
       "noArea": "This area is too small. Draw a larger one.",
@@ -1727,5 +1734,47 @@
   },
   "NumberField": {
     "drag": "Drag sideways to change"
+  },
+  "Pattern": {
+    "heading": "Pattern",
+    "fill": "Pattern",
+    "fillHint": "Fill the selected closed paths with a pattern",
+    "filling": "Filling…",
+    "defaultName": "Pattern",
+    "cell": "Cell",
+    "cells": {
+      "square": "Squares",
+      "brick": "Bricks",
+      "hexagon": "Honeycomb",
+      "triangle": "Triangles",
+      "diamond": "Diamonds",
+      "circleSquare": "Circles (square grid)",
+      "circleHex": "Circles (hexagonal grid)",
+      "lines": "Lines",
+      "crosshatch": "Crosshatch",
+      "wave": "Waves",
+      "zigzag": "Zigzag",
+      "herringbone": "Herringbone",
+      "basketWeave": "Basket weave",
+      "fishScale": "Fish scales",
+      "chevron": "Chevrons",
+      "star": "Stars",
+      "truchet": "Truchet arcs",
+      "voronoi": "Voronoi cells"
+    },
+    "size": "Cell size",
+    "gap": "Gap",
+    "inset": "Inset",
+    "amplitude": "Wave height",
+    "wavelength": "Wavelength",
+    "seed": "Seed",
+    "rotation": "Rotation",
+    "offset": {
+      "x": "Offset X",
+      "y": "Offset Y"
+    },
+    "tabsRemoved": "Removed {count, plural, one {# tab} other {# tabs}} that no longer lay on the cells.",
+    "convert": "Convert to drawing",
+    "convertTitle": "Keep the cells as a drawing, machined by the same operations; it no longer follows its boundary"
   }
 }
