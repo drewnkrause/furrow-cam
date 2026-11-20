@@ -40,6 +40,9 @@ function run(command: string, args: string[]) {
   });
 }
 
+/** Millimetres of path the simulator plays each second at 100× (`PLAYBACK_MM_PER_SECOND` × 100). */
+export const PLAYBACK_100X = 2500;
+
 /** A video being recorded: the page, a frame at a time, piped into ffmpeg. */
 export class Recorder {
   readonly page: Page;
@@ -216,12 +219,12 @@ export class Recorder {
    * at 0.5, each is recorded twice.
    */
   async frame() {
-    // Work the last input started lands before the tick, so the 3D view draws it in this frame.
-    await this.#settled();
+    const tick = this.#ticks + 1;
+    const copies = Math.floor(tick / this.#speed) - Math.floor((tick - 1) / this.#speed);
+    // Work the last input started lands before a recorded tick, so the 3D view draws it in this frame.
+    if (copies > 0) await this.#settled();
     await this.page.clock.runFor(1000 / FPS);
-    this.#ticks++;
-    const copies =
-      Math.floor(this.#ticks / this.#speed) - Math.floor((this.#ticks - 1) / this.#speed);
+    this.#ticks = tick;
     if (copies === 0) return;
     await this.#settled();
     this.#last = await this.#screenshot();

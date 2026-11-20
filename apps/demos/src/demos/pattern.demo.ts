@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import type { Recorder } from "../recorder.ts";
+import { PLAYBACK_100X, type Recorder } from "../recorder.ts";
 
 const sign = fileURLToPath(new URL("../../fixtures/sign.svg", import.meta.url));
 
@@ -15,9 +15,6 @@ const PATHS = {
   // Off the stock, below it: a click there clears the selection.
   empty: [1300, 935],
 } as const;
-
-/** Millimetres of path played each second at 100× (`PLAYBACK_MM_PER_SECOND` × 100). */
-const SPEED = 2500;
 
 /** The cells shown in the picker before the pattern settles on honeycomb, the one carved. */
 const CELLS = ["voronoi", "wave", "fishScale", "hexagon"];
@@ -99,7 +96,7 @@ export default async function pattern(r: Recorder) {
   await r.click("play");
   const view = await r.moveTo("simulation", 0.5);
   await r.moveToPoint(view.x + view.width * 0.35, view.y + view.height * 0.6, 0.3);
-  await r.drag(200, 0, length / SPEED);
+  await r.drag(200, 0, length / PLAYBACK_100X);
   await r.hold(0.5);
   // Then closer, to the honeycomb's walls.
   await r.wheel(-10, 1.5);
