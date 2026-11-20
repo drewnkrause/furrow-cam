@@ -5,7 +5,7 @@ import {
   TERRAIN_BASE,
   TERRAIN_EXAGGERATION,
 } from "@furrow/cam-core";
-import { FlipAxis, PinHoles, StockAnchor, StockCorner } from "@furrow/document";
+import { FlipAxis, PatternCell, PinHoles, StockAnchor, StockCorner } from "@furrow/document";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { RequestHandlerExtra } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type {
@@ -27,6 +27,7 @@ import {
   type OperationType,
   removeOperation,
 } from "./operations";
+import { addPattern } from "./patterns";
 import { createProjects, type Project, type Projects, ToolError } from "./projects";
 import {
   chooseMachine,
@@ -806,6 +807,61 @@ export function createServer(projects: Projects = createProjects(), library = li
     NewOperation,
     "tool"
   >;
+
+  server.registerTool(
+    "add_pattern",
+    {
+      title: "Fill shapes with a pattern",
+      description:
+        "Fills closed paths of one drawing with a pattern, as the app's Pattern command does: cells tiled from an origin at the paths' bottom-left corner and cut at them, nested paths counting even-odd (a frame's inside or a letter's counter stays empty), open paths ignored. The pattern is a drawing of its own whose cells are one shape, machined by profile, pocket, engrave or V-carve like any drawing; it follows its boundary when that drawing is moved, turned, mirrored or resized (cells keep their size), and becomes a plain drawing if the boundary is removed. Settings not given take the app's defaults (hexagons 10 mm across, 1 mm gap). Lengths in mm. Returns the pattern's drawing id, its number of cells, and the project summary.",
+      inputSchema: {
+        path: projectPath,
+        targets: targets.describe(
+          "The closed paths to fill, all of one drawing: whole drawings, shapes, or some of a shape's paths.",
+        ),
+        name: z.string().optional().describe('The pattern\'s name; "Pattern" if left out.'),
+        cell: PatternCell.optional().describe(
+          "The cell: square, brick, hexagon (honeycomb), triangle, diamond, circleSquare and circleHex (circles on a square or hexagonal grid), herringbone, basketWeave, fishScale, chevron, star and voronoi (seeded) are closed cells; lines, crosshatch, wave, zigzag and truchet (seeded arcs) are open lines.",
+        ),
+        size: z
+          .number()
+          .positive()
+          .optional()
+          .describe("A cell's width, or the spacing between a line pattern's lines, in mm."),
+        gap: z
+          .number()
+          .nonnegative()
+          .optional()
+          .describe("The wall left between closed cells, in mm; 0 for shared edges."),
+        inset: z
+          .number()
+          .nonnegative()
+          .optional()
+          .describe("How far inside the boundary the pattern stops, in mm."),
+        amplitude: z.number().positive().optional().describe("A wave's or zigzag's height, in mm."),
+        wavelength: z
+          .number()
+          .positive()
+          .optional()
+          .describe("A wave's or zigzag's length, crest to crest, in mm."),
+        seed: z
+          .int()
+          .nonnegative()
+          .optional()
+          .describe("Seeds Truchet arcs and Voronoi cells; the same seed gives the same cells."),
+        rotation: z.number().optional().describe("The cells' turn, degrees counter-clockwise."),
+        offset: z
+          .tuple([z.number(), z.number()])
+          .optional()
+          .describe("The origin's offset from the boundary's bottom-left corner, [x, y] in mm."),
+      },
+    },
+    ({ path, ...request }) =>
+      respond(async () => {
+        const project = await projects.get(path);
+        return { ...addPattern(project, request), ...summary(project) };
+      }),
+  );
 
   for (const [type, title, what, on] of ADD_TOOLS) {
     server.registerTool(

@@ -32,28 +32,32 @@ export function projectSummary(document: ProjectDocument) {
     },
     machine,
     // Hidden objects aren't cut, locked ones aren't picked in the app (ADR-0080); flags only when set.
-    drawings: document.drawings.map(({ id, name, rotation, border, text, hidden, locked }) => {
-      const shapes = document.geometry.filter((shape) => shape.drawingId === id);
-      return {
-        id,
-        name,
-        ...(text && { text }),
-        rotation,
-        border,
-        ...(hidden && { hidden }),
-        ...(locked && { locked }),
-        shapes: shapes.map(({ id, name, layer, paths, hidden, locked }) => ({
+    drawings: document.drawings.map(
+      ({ id, name, rotation, border, text, pattern, hidden, locked }) => {
+        const shapes = document.geometry.filter((shape) => shape.drawingId === id);
+        return {
           id,
           name,
-          layer,
-          paths: paths.length,
+          ...(text && { text }),
+          // Its settings; its cells are its one shape, generated inside `boundary` (ADR-0087).
+          ...(pattern && { pattern }),
+          rotation,
+          border,
           ...(hidden && { hidden }),
           ...(locked && { locked }),
-        })),
-        /** In stock coordinates: (0, 0) is the stock's bottom-left corner. */
-        bounds: shapesBounds(shapes),
-      };
-    }),
+          shapes: shapes.map(({ id, name, layer, paths, hidden, locked }) => ({
+            id,
+            name,
+            layer,
+            paths: paths.length,
+            ...(hidden && { hidden }),
+            ...(locked && { locked }),
+          })),
+          /** In stock coordinates: (0, 0) is the stock's bottom-left corner. */
+          bounds: shapesBounds(shapes),
+        };
+      },
+    ),
     models: document.models.map(
       ({ id, fileName, triangles, bounds, placement, border, hidden, locked }) => {
         const [width, height, depth] = rotatedSize(bounds, placement.rotation);

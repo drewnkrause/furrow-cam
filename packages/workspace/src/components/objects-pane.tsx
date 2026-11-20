@@ -13,6 +13,7 @@ import {
   DownloadIcon,
   EyeIcon,
   EyeOffIcon,
+  HexagonIcon,
   LockIcon,
   LockOpenIcon,
   ShapesIcon,
@@ -48,6 +49,8 @@ type Row = {
   expanded: boolean | null;
   parent: string | null;
   text: boolean;
+  /** A pattern drawing's row (ADR-0087). */
+  pattern?: boolean;
   /** Its own flags, which its eye and lock show and set. */
   hidden: boolean;
   locked: boolean;
@@ -127,6 +130,7 @@ export function ObjectsPane() {
         expanded: shapes.length > 0 ? open : null,
         parent: null,
         text: drawing.text !== undefined,
+        pattern: drawing.pattern !== undefined,
         ...inherited,
         inherited: NOT_INHERITED,
       });
@@ -312,7 +316,9 @@ export function ObjectsPane() {
               ? SplineIcon
               : row.text
                 ? TypeIcon
-                : ShapesIcon;
+                : row.pattern
+                  ? HexagonIcon
+                  : ShapesIcon;
         return (
           <div
             key={row.key}

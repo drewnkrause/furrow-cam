@@ -29,7 +29,7 @@ import {
 } from "@furrow/document";
 import type { Draft } from "immer";
 import type { DocumentStore } from "./document-store";
-import { moveStartPoints, moveTextWithOutlines, type StartPointParams } from "./geometry-actions";
+import { moveSettingsWithShapes, moveStartPoints, type StartPointParams } from "./geometry-actions";
 
 /**
  * Document store actions on the project's units and stock (ADR-0010): each
@@ -62,7 +62,7 @@ function moveDrawing(
   // One assignment, so the undo step is one patch rather than one per point.
   draft.geometry = translateShapes(geometry, offset);
   for (const drawing of draft.drawings) {
-    moveTextWithOutlines(drawing, (point) => translatePoint(point, offset));
+    moveSettingsWithShapes(drawing, (point) => translatePoint(point, offset));
   }
   for (const { placement } of draft.models) {
     placement.position = translatePoint(placement.position, offset);

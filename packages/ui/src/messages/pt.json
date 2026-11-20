@@ -822,7 +822,14 @@
       "terrainUnavailable": "Não foi possível transferir as altitudes. Verifique a ligação e tente novamente.",
       "inlayClosedPaths": "Selecione caminhos fechados para fazer uma incrustação.",
       "inlayGap": "A folga para a cola deve ser pelo menos 0 e menor que a profundidade do rebaixo.",
-      "inlayTooDeep": "Esta incrustação é profunda demais para o cone da fresa em V ou para o material: o rebaixo deve ficar dentro do cone e o fundo da peça dentro do material."
+      "inlayTooDeep": "Esta incrustação é profunda demais para o cone da fresa em V ou para o material: o rebaixo deve ficar dentro do cone e o fundo da peça dentro do material.",
+      "patternEmpty": "Nenhuma célula cabe no contorno: reduza as células ou o recuo.",
+      "patternTooDense": "As células são demasiado pequenas para este contorno: aumente-as.",
+      "patternFailed": "Não foi possível gerar o padrão.",
+      "patternNoSelection": "Selecione caminhos fechados de um desenho para preencher.",
+      "patternOneDrawing": "Selecione caminhos de um só desenho.",
+      "patternOfPattern": "Um padrão não pode ser preenchido com outro.",
+      "patternNoClosedPath": "A seleção não tem caminhos fechados para preencher."
     },
     "terrain": {
       "noArea": "Esta área é demasiado pequena. Desenhe uma maior.",
@@ -1734,5 +1741,49 @@
   },
   "NumberField": {
     "drag": "Arraste para os lados para alterar"
+  },
+  "Pattern": {
+    "heading": "Padrão",
+    "followsBoundary": "Move-se, roda e espelha-se com o desenho que preenche: selecione esse desenho para o mover. Redimensioná-lo muda o contorno; as células mantêm o tamanho. A rotação, o espelho e o deslocamento movem as células no seu interior.",
+    "fill": "Padrão",
+    "fillHint": "Preencher os caminhos fechados selecionados com um padrão",
+    "filling": "A preencher…",
+    "defaultName": "Padrão",
+    "cell": "Célula",
+    "cells": {
+      "square": "Quadrados",
+      "brick": "Tijolos",
+      "hexagon": "Favo de mel",
+      "triangle": "Triângulos",
+      "diamond": "Losangos",
+      "circleSquare": "Círculos (grelha quadrada)",
+      "circleHex": "Círculos (grelha hexagonal)",
+      "lines": "Linhas",
+      "crosshatch": "Tracejado cruzado",
+      "wave": "Ondas",
+      "zigzag": "Ziguezague",
+      "herringbone": "Espinha de peixe",
+      "basketWeave": "Cesto",
+      "fishScale": "Escamas",
+      "chevron": "Chevrons",
+      "star": "Estrelas",
+      "truchet": "Arcos de Truchet",
+      "voronoi": "Células de Voronoi"
+    },
+    "size": "Tamanho da célula",
+    "gap": "Espaço",
+    "inset": "Recuo",
+    "amplitude": "Altura da onda",
+    "wavelength": "Comprimento de onda",
+    "seed": "Semente",
+    "rotation": "Rotação",
+    "mirrored": "Espelhado",
+    "offset": {
+      "x": "Deslocamento X",
+      "y": "Deslocamento Y"
+    },
+    "tabsRemoved": "{count, plural, one {Removida # patilha que já não estava} other {Removidas # patilhas que já não estavam}} sobre as células.",
+    "convert": "Converter em desenho",
+    "convertTitle": "Manter as células como desenho, maquinado pelas mesmas operações; deixa de seguir o seu contorno"
   }
 }

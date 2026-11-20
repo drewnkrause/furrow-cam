@@ -822,7 +822,14 @@
       "terrainUnavailable": "Yükseklikler indirilemedi. Bağlantınızı kontrol edip yeniden deneyin.",
       "inlayClosedPaths": "Kakma yapmak için kapalı yollar seçin.",
       "inlayGap": "Tutkal boşluğu en az 0 ve cep derinliğinden küçük olmalıdır.",
-      "inlayTooDeep": "Bu kakma V ucunun konisi veya malzeme için çok derin: cep koninin, parçanın tabanı malzemenin içinde kalmalıdır."
+      "inlayTooDeep": "Bu kakma V ucunun konisi veya malzeme için çok derin: cep koninin, parçanın tabanı malzemenin içinde kalmalıdır.",
+      "patternEmpty": "Sınırın içine hiçbir hücre sığmıyor: hücreleri veya içe boşluğu küçültün.",
+      "patternTooDense": "Hücreler bu sınır için çok küçük: büyütün.",
+      "patternFailed": "Desen oluşturulamadı.",
+      "patternNoSelection": "Doldurmak için bir çizimin kapalı yollarını seçin.",
+      "patternOneDrawing": "Yalnızca tek bir çizimin yollarını seçin.",
+      "patternOfPattern": "Bir desen başka bir desenle doldurulamaz.",
+      "patternNoClosedPath": "Seçimde doldurulacak kapalı yol yok."
     },
     "terrain": {
       "noArea": "Bu alan çok küçük. Daha büyük bir alan çizin.",
@@ -1734,5 +1741,49 @@
   },
   "NumberField": {
     "drag": "Değiştirmek için yana sürükleyin"
+  },
+  "Pattern": {
+    "heading": "Desen",
+    "followsBoundary": "Doldurduğu çizimle birlikte taşınır, döner ve aynalanır: taşımak için o çizimi seçin. O çizimi yeniden boyutlandırmak dış hattı değiştirir; hücreler boyutlarını korur. Döndürme, aynalama ve kaydırma içindeki hücreleri taşır.",
+    "fill": "Desen",
+    "fillHint": "Seçili kapalı yolları bir desenle doldur",
+    "filling": "Dolduruluyor…",
+    "defaultName": "Desen",
+    "cell": "Hücre",
+    "cells": {
+      "square": "Kareler",
+      "brick": "Tuğlalar",
+      "hexagon": "Petek",
+      "triangle": "Üçgenler",
+      "diamond": "Baklavalar",
+      "circleSquare": "Daireler (kare ızgara)",
+      "circleHex": "Daireler (altıgen ızgara)",
+      "lines": "Çizgiler",
+      "crosshatch": "Çapraz tarama",
+      "wave": "Dalgalar",
+      "zigzag": "Zikzak",
+      "herringbone": "Balıksırtı",
+      "basketWeave": "Sepet örgüsü",
+      "fishScale": "Balık pulları",
+      "chevron": "Şeritler",
+      "star": "Yıldızlar",
+      "truchet": "Truchet yayları",
+      "voronoi": "Voronoi hücreleri"
+    },
+    "size": "Hücre boyutu",
+    "gap": "Aralık",
+    "inset": "İçe boşluk",
+    "amplitude": "Dalga yüksekliği",
+    "wavelength": "Dalga boyu",
+    "seed": "Tohum",
+    "rotation": "Döndürme",
+    "mirrored": "Aynalanmış",
+    "offset": {
+      "x": "Kaydırma X",
+      "y": "Kaydırma Y"
+    },
+    "tabsRemoved": "Artık hücrelerin üzerinde olmayan {count, plural, one {# tutucu} other {# tutucu}} kaldırıldı.",
+    "convert": "Çizime dönüştür",
+    "convertTitle": "Hücreleri aynı işlemlerle işlenen bir çizim olarak tut; artık sınırını izlemez"
   }
 }

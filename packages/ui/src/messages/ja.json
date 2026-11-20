@@ -822,7 +822,14 @@
       "terrainUnavailable": "標高を取得できませんでした。接続を確認して、もう一度お試しください。",
       "inlayClosedPaths": "象嵌を作るには閉じたパスを選択してください。",
       "inlayGap": "接着剤の隙間は 0 以上、ポケットの深さ未満にしてください。",
-      "inlayTooDeep": "この象嵌は V ビットの円錐部または素材に対して深すぎます。ポケットは円錐部の中に、プラグの底は素材の中に収めてください。"
+      "inlayTooDeep": "この象嵌は V ビットの円錐部または素材に対して深すぎます。ポケットは円錐部の中に、プラグの底は素材の中に収めてください。",
+      "patternEmpty": "境界内に収まるセルがありません。セルまたは余白を小さくしてください。",
+      "patternTooDense": "この境界にはセルが小さすぎます。大きくしてください。",
+      "patternFailed": "パターンを生成できませんでした。",
+      "patternNoSelection": "塗りつぶす図面の閉じたパスを選択してください。",
+      "patternOneDrawing": "1 つの図面のパスだけを選択してください。",
+      "patternOfPattern": "パターンを別のパターンで塗りつぶすことはできません。",
+      "patternNoClosedPath": "選択範囲に塗りつぶせる閉じたパスがありません。"
     },
     "terrain": {
       "noArea": "この範囲は小さすぎます。もっと大きく描いてください。",
@@ -1734,5 +1741,49 @@
   },
   "NumberField": {
     "drag": "左右にドラッグして変更"
+  },
+  "Pattern": {
+    "heading": "パターン",
+    "followsBoundary": "塗りつぶしている図面と一緒に移動・回転・反転します。動かすにはその図面を選択してください。その図面のサイズを変えると輪郭が変わり、セルの大きさはそのままです。回転・反転・オフセットは内側のセルを動かします。",
+    "fill": "パターン",
+    "fillHint": "選択した閉じたパスをパターンで塗りつぶします",
+    "filling": "塗りつぶし中…",
+    "defaultName": "パターン",
+    "cell": "セル",
+    "cells": {
+      "square": "正方形",
+      "brick": "レンガ",
+      "hexagon": "ハニカム",
+      "triangle": "三角形",
+      "diamond": "ひし形",
+      "circleSquare": "円(正方格子)",
+      "circleHex": "円(六角格子)",
+      "lines": "線",
+      "crosshatch": "クロスハッチ",
+      "wave": "波",
+      "zigzag": "ジグザグ",
+      "herringbone": "ヘリンボーン",
+      "basketWeave": "バスケット織り",
+      "fishScale": "うろこ",
+      "chevron": "山形",
+      "star": "星",
+      "truchet": "トルシェの弧",
+      "voronoi": "ボロノイセル"
+    },
+    "size": "セルのサイズ",
+    "gap": "間隔",
+    "inset": "内側の余白",
+    "amplitude": "波の高さ",
+    "wavelength": "波長",
+    "seed": "シード",
+    "rotation": "回転",
+    "mirrored": "反転",
+    "offset": {
+      "x": "オフセット X",
+      "y": "オフセット Y"
+    },
+    "tabsRemoved": "セル上になくなったタブを {count} 個削除しました。",
+    "convert": "図面に変換",
+    "convertTitle": "セルを図面として残し、同じ加工で削ります。境界には追従しなくなります"
   }
 }

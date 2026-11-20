@@ -822,7 +822,14 @@
       "terrainUnavailable": "Les altitudes n'ont pas pu être téléchargées. Vérifiez votre connexion et réessayez.",
       "inlayClosedPaths": "Sélectionnez des tracés fermés pour en faire une marqueterie.",
       "inlayGap": "Le jeu de colle doit être d'au moins 0 et inférieur à la profondeur de la poche.",
-      "inlayTooDeep": "Cette incrustation est trop profonde pour le cône de la fraise en V ou pour le brut : la poche doit rester dans le cône et le fond de la pièce dans le brut."
+      "inlayTooDeep": "Cette incrustation est trop profonde pour le cône de la fraise en V ou pour le brut : la poche doit rester dans le cône et le fond de la pièce dans le brut.",
+      "patternEmpty": "Aucune cellule ne tient dans le contour : réduisez les cellules ou le retrait.",
+      "patternTooDense": "Les cellules sont trop petites pour ce contour : agrandissez-les.",
+      "patternFailed": "Le motif n'a pas pu être généré.",
+      "patternNoSelection": "Sélectionnez des tracés fermés d'un dessin à remplir.",
+      "patternOneDrawing": "Sélectionnez les tracés d'un seul dessin.",
+      "patternOfPattern": "Un motif ne peut pas être rempli par un autre.",
+      "patternNoClosedPath": "La sélection n'a aucun tracé fermé à remplir."
     },
     "terrain": {
       "noArea": "Cette zone est trop petite. Dessinez-en une plus grande.",
@@ -1734,5 +1741,49 @@
   },
   "NumberField": {
     "drag": "Faites glisser latéralement pour modifier"
+  },
+  "Pattern": {
+    "heading": "Motif",
+    "followsBoundary": "Il se déplace, tourne et se reflète avec le dessin qu'il remplit : sélectionnez ce dessin pour le déplacer. Redimensionner ce dessin change le contour ; les cellules gardent leur taille. La rotation, le miroir et le décalage déplacent les cellules à l'intérieur.",
+    "fill": "Motif",
+    "fillHint": "Remplir les tracés fermés sélectionnés avec un motif",
+    "filling": "Remplissage…",
+    "defaultName": "Motif",
+    "cell": "Cellule",
+    "cells": {
+      "square": "Carrés",
+      "brick": "Briques",
+      "hexagon": "Nid d'abeille",
+      "triangle": "Triangles",
+      "diamond": "Losanges",
+      "circleSquare": "Cercles (grille carrée)",
+      "circleHex": "Cercles (grille hexagonale)",
+      "lines": "Lignes",
+      "crosshatch": "Hachures croisées",
+      "wave": "Vagues",
+      "zigzag": "Zigzag",
+      "herringbone": "Chevrons (bâtons rompus)",
+      "basketWeave": "Vannerie",
+      "fishScale": "Écailles",
+      "chevron": "Chevrons",
+      "star": "Étoiles",
+      "truchet": "Arcs de Truchet",
+      "voronoi": "Cellules de Voronoï"
+    },
+    "size": "Taille de cellule",
+    "gap": "Écart",
+    "inset": "Retrait",
+    "amplitude": "Hauteur de vague",
+    "wavelength": "Longueur d'onde",
+    "seed": "Graine",
+    "rotation": "Rotation",
+    "mirrored": "En miroir",
+    "offset": {
+      "x": "Décalage X",
+      "y": "Décalage Y"
+    },
+    "tabsRemoved": "{count, plural, one {# attache retirée, qui n'était} other {# attaches retirées, qui n'étaient}} plus sur les cellules.",
+    "convert": "Convertir en dessin",
+    "convertTitle": "Garder les cellules comme dessin, usiné par les mêmes opérations ; il ne suit plus son contour"
   }
 }

@@ -822,7 +822,14 @@
       "terrainUnavailable": "De hoogtes konden niet worden opgehaald. Controleer je verbinding en probeer het opnieuw.",
       "inlayClosedPaths": "Selecteer gesloten paden om er een inlegwerk van te maken.",
       "inlayGap": "De lijmspleet moet minstens 0 zijn en kleiner dan de diepte van de uitsparing.",
-      "inlayTooDeep": "Dit inlegwerk is te diep voor de kegel van de V-frees of voor het materiaal: de uitsparing moet binnen de kegel blijven en de bodem van het inlegstuk binnen het materiaal."
+      "inlayTooDeep": "Dit inlegwerk is te diep voor de kegel van de V-frees of voor het materiaal: de uitsparing moet binnen de kegel blijven en de bodem van het inlegstuk binnen het materiaal.",
+      "patternEmpty": "Geen cel past binnen de begrenzing: maak de cellen of de inspringing kleiner.",
+      "patternTooDense": "De cellen zijn te klein voor deze begrenzing: maak ze groter.",
+      "patternFailed": "Het patroon kon niet worden gemaakt.",
+      "patternNoSelection": "Selecteer gesloten paden van een tekening om te vullen.",
+      "patternOneDrawing": "Selecteer paden van één tekening.",
+      "patternOfPattern": "Een patroon kan niet met een ander worden gevuld.",
+      "patternNoClosedPath": "De selectie heeft geen gesloten pad om te vullen."
     },
     "terrain": {
       "noArea": "Dit gebied is te klein. Teken een groter gebied.",
@@ -1734,5 +1741,49 @@
   },
   "NumberField": {
     "drag": "Sleep zijwaarts om te wijzigen"
+  },
+  "Pattern": {
+    "heading": "Patroon",
+    "followsBoundary": "Het verplaatst, draait en spiegelt mee met de tekening die het vult: selecteer die tekening om het te verplaatsen. Het formaat ervan wijzigen verandert de omtrek; de cellen houden hun grootte. Rotatie, spiegeling en verschuiving verplaatsen de cellen erbinnen.",
+    "fill": "Patroon",
+    "fillHint": "De geselecteerde gesloten paden met een patroon vullen",
+    "filling": "Bezig met vullen…",
+    "defaultName": "Patroon",
+    "cell": "Cel",
+    "cells": {
+      "square": "Vierkanten",
+      "brick": "Bakstenen",
+      "hexagon": "Honingraat",
+      "triangle": "Driehoeken",
+      "diamond": "Ruiten",
+      "circleSquare": "Cirkels (vierkant raster)",
+      "circleHex": "Cirkels (zeshoekig raster)",
+      "lines": "Lijnen",
+      "crosshatch": "Kruisarcering",
+      "wave": "Golven",
+      "zigzag": "Zigzag",
+      "herringbone": "Visgraat",
+      "basketWeave": "Mandvlecht",
+      "fishScale": "Visschubben",
+      "chevron": "Chevrons",
+      "star": "Sterren",
+      "truchet": "Truchet-bogen",
+      "voronoi": "Voronoi-cellen"
+    },
+    "size": "Celgrootte",
+    "gap": "Tussenruimte",
+    "inset": "Inspringing",
+    "amplitude": "Golfhoogte",
+    "wavelength": "Golflengte",
+    "seed": "Seed",
+    "rotation": "Rotatie",
+    "mirrored": "Gespiegeld",
+    "offset": {
+      "x": "Verschuiving X",
+      "y": "Verschuiving Y"
+    },
+    "tabsRemoved": "{count, plural, one {# lipje verwijderd dat} other {# lipjes verwijderd die}} niet meer op de cellen lagen.",
+    "convert": "Omzetten naar tekening",
+    "convertTitle": "De cellen als tekening behouden, bewerkt door dezelfde bewerkingen; volgt de begrenzing niet meer"
   }
 }

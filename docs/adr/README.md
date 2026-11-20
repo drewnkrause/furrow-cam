@@ -101,4 +101,5 @@ Statuses: `Proposed` · `Accepted` · `Rejected` · `Deprecated` · `Superseded 
 | [0084](0084-vcarve-inlays-start-depth.md) | V-carve inlays come from a start depth and a boundary path among the targets | Accepted |
 | [0085](0085-several-models.md) | A project holds several models, each machined on its own | Accepted |
 | [0086](0086-holding-tabs-belong-to-the-stock.md) | Holding tabs belong to the stock, so one-sided jobs have them too | Accepted |
-| [0087](0087-patterns-are-drawings-anchored-to-a-boundary.md) | A pattern is a drawing that keeps its settings and its boundary, and stores its cells as one shape | Accepted |
+| [0087](0087-patterns-are-drawings-anchored-to-a-boundary.md) | A pattern is a drawing that keeps its settings and its boundary, and stores its cells as one shape | Accepted; superseded in part by ADR-0088 |
+| [0088](0088-pattern-panel-offers-only-its-settings.md) | A pattern is placed through its boundary and its own settings, not transformed on its own | Accepted |
