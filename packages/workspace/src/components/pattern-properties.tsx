@@ -1,7 +1,8 @@
 "use client";
 
 import { flattenPath, MIN_LENGTH, patternPaths } from "@furrow/cam-core";
-import { type Path, PatternCell, type PatternSettings, type Point } from "@furrow/document";
+import { type Path, PatternCell, type PatternSettings } from "@furrow/document";
+import { useDialogs } from "@furrow/ui/components/dialogs";
 import { NumberField } from "@furrow/ui/components/number-field";
 import { Button } from "@furrow/ui/components/ui/button";
 import { useFormatMessage } from "@furrow/ui/hooks/use-format-message";
@@ -44,33 +45,36 @@ const SEEDED: readonly PatternCell[] = ["truchet", "voronoi"];
 export function FillPatternButton() {
   const store = useDocumentStoreApi();
   const workspace = useWorkspaceStoreApi();
-  const document = useDocumentStore((s) => s.document);
+  const geometry = useDocumentStore((s) => s.document.geometry);
+  const drawings = useDocumentStore((s) => s.document.drawings);
   const targets = useSelectionTargets();
-  const [error, setError] = useState<Translatable | null>(null);
   const [adding, setAdding] = useState(false);
+  const { alert } = useDialogs();
   const t = useTranslations("Pattern");
   const format = useFormatMessage();
-  const bound = useMemo(() => patternBoundary(document, targets), [document, targets]);
+  const bound = useMemo(
+    () => patternBoundary({ geometry, drawings }, targets),
+    [geometry, drawings, targets],
+  );
 
   async function fill() {
     setAdding(true);
     const result = await addPattern(store, targets, t("defaultName")).finally(() =>
       setAdding(false),
     );
-    if (!result.ok) return setError(result.error);
-    setError(null);
+    // Said once: the selection may well fill with other settings or paths.
+    if (!result.ok) return alert(format(result.error));
     const [shape] = drawingShapes(store.getState().document.geometry, result.id);
     if (shape) workspace.getState().selectPaths(shapePaths(shape));
   }
 
-  const reason = !bound.ok ? bound.error : error;
   return (
     <RibbonButton
       icon={<HexagonIcon />}
       label={t("fill")}
       hint={t("fillHint")}
       data-tour="fill-pattern"
-      disabledReason={adding ? t("filling") : reason ? format(reason) : undefined}
+      disabledReason={adding ? t("filling") : bound.ok ? undefined : format(bound.error)}
       onClick={() => void fill()}
     />
   );
@@ -110,8 +114,6 @@ export function PatternProperties({
     setError(result.ok ? null : result.error);
     if (result.ok) setRemovedTabs(result.removedTabs);
   }
-  const place = (changes: Partial<PatternSettings["placement"]>) =>
-    void edit({ placement: { ...pattern.placement, ...changes } });
   const length = (key: "size" | "gap" | "inset" | "amplitude" | "wavelength", min: number) => (
     <NumberField
       id={`pattern-${key}`}
@@ -185,7 +187,7 @@ export function PatternProperties({
         quantity="number"
         suffix="°"
         value={pattern.placement.rotation}
-        onValueChange={(degrees) => place({ rotation: ((degrees % 360) + 360) % 360 })}
+        onValueChange={(degrees) => void edit({ rotation: ((degrees % 360) + 360) % 360 })}
         {...gestures}
       />
       {(["x", "y"] as const).map((axis, i) => (
@@ -197,11 +199,7 @@ export function PatternProperties({
           quantity="length"
           units={units}
           value={(pattern.placement.position[i] as number) - (corner[i] as number)}
-          onValueChange={(value) => {
-            const position: Point = [...pattern.placement.position];
-            position[i] = (corner[i] as number) + value;
-            place({ position });
-          }}
+          onValueChange={(value) => void edit({ [axis]: (corner[i] as number) + value })}
           {...gestures}
         />
       ))}

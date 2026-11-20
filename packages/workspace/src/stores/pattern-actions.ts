@@ -25,7 +25,7 @@ export const PATTERN_NO_CLOSED_PATH: Message = { code: "workspace.patternNoClose
  * there is none.
  */
 export function patternBoundary(
-  document: ProjectDocument,
+  document: Pick<ProjectDocument, "geometry" | "drawings">,
   targets: readonly OperationTarget[],
 ): { ok: true; boundary: ShapePaths[] } | { ok: false; error: Message } {
   if (targets.length === 0) return { ok: false, error: PATTERN_NO_SELECTION };
@@ -82,8 +82,7 @@ export function setPatternItem(
 ): number {
   const { document } = store.getState();
   if (!document.drawings.some((drawing) => drawing.id === id && drawing.pattern)) return 0;
-  const derived = derivedPathsChange(document, id, paths);
-  if (!derived) return 0;
+  const derived = derivedPathsChange(document, new Map([[id, paths]]));
   store.getState().change("setPattern", (draft) => {
     const drawing = draft.drawings.find((d) => d.id === id);
     if (drawing) drawing.pattern = settings;

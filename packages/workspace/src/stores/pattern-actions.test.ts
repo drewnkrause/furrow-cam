@@ -1,5 +1,6 @@
 import { flattenPath, signedArea } from "@furrow/cam-core";
 import {
+  type Path,
   type PatternSettings,
   type Point,
   ProjectDocument,
@@ -17,6 +18,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_PATTERN, generatePattern } from "../lib/patterns";
 import { createDocumentStore } from "./document-store";
 import {
+  derivedPathsChange,
   drawingShapes,
   duplicateDrawing,
   mirrorDrawing,
@@ -177,6 +179,90 @@ describe("pattern items", () => {
     valid(document());
     store.getState().undo();
     expect(cells()).toHaveLength(count);
+  });
+
+  it("are only mapped while a gesture resizes or drags them, and generated once as it commits", () => {
+    const { store, id, document, pattern, cells } = withPattern();
+    const before = document();
+    const count = cells().length;
+    store.getState().beginTransaction();
+    for (const width of [150, 180, 200]) setDrawingSize(store, DRAWING_ID, "width", width);
+    // Scaled with the boundary meanwhile: as many cells, larger.
+    expect(cells()).toHaveLength(count);
+    expect(Math.max(...areas(cells()))).toBeGreaterThan(100 + 1e-6);
+    store.getState().commitTransaction();
+    expect(cells().length).toBeGreaterThan(3 * count);
+    expect(Math.max(...areas(cells()))).toBeLessThanOrEqual(100 + 1e-6);
+    valid(document());
+    // One undo step.
+    store.getState().undo();
+    expect(document()).toEqual(before);
+
+    store.getState().beginTransaction();
+    moveDrawing(store, id, [1, 0]);
+    moveDrawing(store, id, [2, 0]);
+    store.getState().commitTransaction();
+    expect(pattern()?.placement.position).toEqual([3, 0]);
+    const xs = points(cells()).map(([x]) => x);
+    expect(Math.min(...xs)).toBeCloseTo(0, 6);
+    valid(document());
+  });
+
+  it("drop the tabs of one profile on two of them that both regenerate, each from the original list", () => {
+    const { store, id, document } = withPattern();
+    const square = (x: number): Path => ({
+      start: [x, 0],
+      segments: [
+        { kind: "line", to: [x + 10, 0] },
+        { kind: "line", to: [x + 10, 10] },
+        { kind: "line", to: [x, 10] },
+      ],
+      closed: true,
+    });
+    const circle = { ...SETTINGS, boundary: [{ shapeId: CIRCLE_ID, paths: null }] };
+    const other = addPatternItem(store, "Circle", circle, [square(200)]);
+    const ids = [id, other].map(
+      (drawing) => drawingShapes(document().geometry, drawing)[0]?.id as string,
+    );
+    store.getState().change("profile", (draft) => {
+      const [profile] = draft.operations;
+      if (profile?.type !== "profile" || !profile.params.tabs) throw new Error("fixture");
+      profile.targets = ids.map((shapeId) => ({ shapeId, paths: null }));
+      profile.params.tabs.positions = [
+        [5, 0],
+        [205, 0],
+      ];
+    });
+    // Both sets of cells land far off both tabs.
+    const change = derivedPathsChange(
+      document(),
+      new Map([
+        [id, [square(500)]],
+        [other, [square(600)]],
+      ]),
+    );
+    store.getState().change("derive", (draft) => change.apply(draft));
+    const [profile] = document().operations;
+    expect(profile?.type === "profile" && profile.params.tabs?.positions).toEqual([]);
+  });
+
+  it("move the start points on their cells with them", () => {
+    const { store, id, document } = withPattern();
+    const shapeId = drawingShapes(document().geometry, id)[0]?.id as string;
+    store.getState().change("profile", (draft) => {
+      const [profile] = draft.operations;
+      if (profile?.type !== "profile") throw new Error("fixture");
+      draft.operations.push({
+        ...profile,
+        id: "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
+        targets: [{ shapeId, paths: null }],
+        params: { ...profile.params, tabs: null, startPoints: [{ start: [10, 5], plunge: null }] },
+      });
+    });
+    moveDrawing(store, id, [3, 0]);
+    const profile = document().operations.at(-1);
+    expect(profile?.type === "profile" && profile.params.startPoints[0]?.start).toEqual([13, 5]);
+    valid(document());
   });
 
   it("refuse a resize that leaves no cell inside, changing nothing", () => {
