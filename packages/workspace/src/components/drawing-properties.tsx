@@ -56,7 +56,7 @@ import { TextProperties } from "./text-properties";
  * leaves, mirroring and turning it (D6, D7), its position from the zero,
  * duplicating (D8) and removing it, each an undoable edit. A text item's or
  * a pattern's settings come first (PRD-0010, PRD-0016); a pattern shows only
- * those, as its boundary sizes, turns and places it.
+ * those, as its boundary sizes, turns and places it (ADR-0088).
  */
 export function DrawingProperties({ drawingId }: { drawingId: string }) {
   const store = useDocumentStoreApi();
@@ -114,7 +114,7 @@ export function DrawingProperties({ drawingId }: { drawingId: string }) {
       {drawing.text && <TextProperties drawingId={drawing.id} text={drawing.text} />}
       {drawing.pattern && <PatternProperties drawingId={drawing.id} pattern={drawing.pattern} />}
 
-      {/* A pattern is sized, turned and placed by its boundary and its own settings (ADR-0087). */}
+      {/* A pattern is sized, turned and placed by its boundary and its own settings (ADR-0088). */}
       {!drawing.pattern && (
         <>
           <section aria-labelledby="drawing-size-heading" className="grid gap-2">
