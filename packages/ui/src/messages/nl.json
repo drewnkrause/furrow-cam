@@ -1737,6 +1737,7 @@
   },
   "Pattern": {
     "heading": "Patroon",
+    "followsBoundary": "Het verplaatst, draait en schaalt mee met de tekening die het vult; selecteer die tekening om het te verplaatsen. Rotatie en verschuiving verplaatsen de cellen erbinnen.",
     "fill": "Patroon",
     "fillHint": "De geselecteerde gesloten paden met een patroon vullen",
     "filling": "Bezig met vullen…",

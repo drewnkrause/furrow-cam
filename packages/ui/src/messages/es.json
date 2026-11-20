@@ -1737,6 +1737,7 @@
   },
   "Pattern": {
     "heading": "Patrón",
+    "followsBoundary": "Se mueve, gira y cambia de tamaño con el dibujo que rellena; selecciona ese dibujo para moverlo. La rotación y el desplazamiento mueven las celdas dentro de él.",
     "fill": "Patrón",
     "fillHint": "Rellenar los trazados cerrados seleccionados con un patrón",
     "filling": "Rellenando…",

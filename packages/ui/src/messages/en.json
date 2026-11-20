@@ -1737,6 +1737,7 @@
   },
   "Pattern": {
     "heading": "Pattern",
+    "followsBoundary": "It moves, turns and resizes with the drawing it fills; select that drawing to move it. Rotation and offset move the cells inside it.",
     "fill": "Pattern",
     "fillHint": "Fill the selected closed paths with a pattern",
     "filling": "Filling…",

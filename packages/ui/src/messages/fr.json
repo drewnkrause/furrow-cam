@@ -1737,6 +1737,7 @@
   },
   "Pattern": {
     "heading": "Motif",
+    "followsBoundary": "Il se déplace, tourne et se redimensionne avec le dessin qu'il remplit ; sélectionnez ce dessin pour le déplacer. La rotation et le décalage déplacent les cellules à l'intérieur.",
     "fill": "Motif",
     "fillHint": "Remplir les tracés fermés sélectionnés avec un motif",
     "filling": "Remplissage…",

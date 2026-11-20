@@ -1737,6 +1737,7 @@
   },
   "Pattern": {
     "heading": "Muster",
+    "followsBoundary": "Es bewegt, dreht und skaliert sich mit der Zeichnung, die es füllt; wählen Sie diese aus, um es zu verschieben. Drehung und Versatz verschieben die Zellen darin.",
     "fill": "Muster",
     "fillHint": "Die ausgewählten geschlossenen Pfade mit einem Muster füllen",
     "filling": "Wird gefüllt…",

@@ -1737,6 +1737,7 @@
   },
   "Pattern": {
     "heading": "Desen",
+    "followsBoundary": "Doldurduğu çizimle birlikte taşınır, döner ve boyutlanır; taşımak için o çizimi seçin. Döndürme ve kaydırma, içindeki hücreleri taşır.",
     "fill": "Desen",
     "fillHint": "Seçili kapalı yolları bir desenle doldur",
     "filling": "Dolduruluyor…",

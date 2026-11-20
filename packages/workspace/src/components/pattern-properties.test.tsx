@@ -108,6 +108,15 @@ describe("PatternProperties", () => {
     fireEvent.click(await screen.findByRole("radio", { name: "Squares" }));
     await waitFor(() => expect(patternDrawing()?.pattern?.cell).toBe("square"));
     expect((screen.getByRole("radio", { name: "Squares" }) as HTMLInputElement).checked).toBe(true);
+    // Its boundary places it: the drawing's own size and position aren't offered.
+    expect(screen.queryByRole("button", { name: "Center on stock" })).toBeNull();
+    expect(screen.queryByLabelText(/^Width/)).toBeNull();
+    const gap = () => screen.getByLabelText(/^Gap/) as HTMLInputElement;
+    expect(gap().disabled).toBe(false);
+    fireEvent.click(screen.getByRole("radio", { name: "Lines" }));
+    await waitFor(() => expect(gap().disabled).toBe(true));
+    fireEvent.click(screen.getByRole("radio", { name: "Squares" }));
+    await waitFor(() => expect(gap().disabled).toBe(false));
 
     // `fullDocument` shows inches: 1 in cells, larger than the 10 mm default.
     const size = screen.getByLabelText(/^Cell size/);

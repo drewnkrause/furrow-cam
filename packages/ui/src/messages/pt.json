@@ -1737,6 +1737,7 @@
   },
   "Pattern": {
     "heading": "Padrão",
+    "followsBoundary": "Move-se, roda e redimensiona-se com o desenho que preenche; selecione esse desenho para o mover. A rotação e o deslocamento movem as células no seu interior.",
     "fill": "Padrão",
     "fillHint": "Preencher os caminhos fechados selecionados com um padrão",
     "filling": "A preencher…",

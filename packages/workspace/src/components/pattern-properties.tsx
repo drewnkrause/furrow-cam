@@ -1,7 +1,7 @@
 "use client";
 
 import { flattenPath, MIN_LENGTH, patternPaths } from "@furrow/cam-core";
-import { type Path, PatternCell, type PatternSettings } from "@furrow/document";
+import { LINE_PATTERN_CELLS, type Path, PatternCell, type PatternSettings } from "@furrow/document";
 import { useDialogs } from "@furrow/ui/components/dialogs";
 import { NumberField } from "@furrow/ui/components/number-field";
 import { Button } from "@furrow/ui/components/ui/button";
@@ -114,8 +114,13 @@ export function PatternProperties({
     setError(result.ok ? null : result.error);
     if (result.ok) setRemovedTabs(result.removedTabs);
   }
-  const length = (key: "size" | "gap" | "inset" | "amplitude" | "wavelength", min: number) => (
+  const length = (
+    key: "size" | "gap" | "inset" | "amplitude" | "wavelength",
+    min: number,
+    disabled = false,
+  ) => (
     <NumberField
+      disabled={disabled}
       id={`pattern-${key}`}
       label={t(key)}
       layout="inline"
@@ -137,6 +142,7 @@ export function PatternProperties({
       <h3 id="pattern-heading" className="font-medium">
         {t("heading")}
       </h3>
+      <p className="text-muted-foreground">{t("followsBoundary")}</p>
       <fieldset className="grid grid-cols-6 gap-1">
         <legend className="sr-only">{t("cell")}</legend>
         {PatternCell.options.map((cell) => (
@@ -163,7 +169,8 @@ export function PatternProperties({
       </fieldset>
       <p className="text-muted-foreground">{t(`cells.${pattern.cell}`)}</p>
       {length("size", MIN_LENGTH)}
-      {length("gap", 0)}
+      {/* Lines have no walls between cells. */}
+      {length("gap", 0, LINE_PATTERN_CELLS.includes(pattern.cell))}
       {length("inset", 0)}
       {WAVY.includes(pattern.cell) && length("amplitude", MIN_LENGTH)}
       {WAVY.includes(pattern.cell) && length("wavelength", MIN_LENGTH)}
