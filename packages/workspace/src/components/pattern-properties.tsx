@@ -29,6 +29,7 @@ import {
 } from "../providers/workspace-stores";
 import { drawingShapes } from "../stores/geometry-actions";
 import { patternBoundary } from "../stores/pattern-actions";
+import { Checkbox } from "./checkbox";
 import { RibbonButton } from "./ribbon";
 
 /** Cell types whose lines have a wave's or a zigzag's shape. */
@@ -196,6 +197,12 @@ export function PatternProperties({
         value={pattern.placement.rotation}
         onValueChange={(degrees) => void edit({ rotation: ((degrees % 360) + 360) % 360 })}
         {...gestures}
+      />
+      <Checkbox
+        id="pattern-mirrored"
+        label={t("mirrored")}
+        checked={pattern.placement.mirrored}
+        onChange={(mirrored) => void edit({ mirrored })}
       />
       {(["x", "y"] as const).map((axis, i) => (
         <NumberField

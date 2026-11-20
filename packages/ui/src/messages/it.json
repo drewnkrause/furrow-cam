@@ -1737,7 +1737,7 @@
   },
   "Pattern": {
     "heading": "Motivo",
-    "followsBoundary": "Si sposta, ruota e ridimensiona con il disegno che riempie; seleziona quel disegno per spostarlo. Rotazione e spostamento muovono le celle al suo interno.",
+    "followsBoundary": "Si sposta, ruota e si specchia con il disegno che riempie: seleziona quel disegno per spostarlo. Ridimensionarlo cambia il contorno; le celle mantengono la loro dimensione. Rotazione, specchiatura e spostamento muovono le celle al suo interno.",
     "fill": "Motivo",
     "fillHint": "Riempi i percorsi chiusi selezionati con un motivo",
     "filling": "Riempimento…",
@@ -1770,6 +1770,7 @@
     "wavelength": "Lunghezza d'onda",
     "seed": "Seme",
     "rotation": "Rotazione",
+    "mirrored": "Specchiato",
     "offset": {
       "x": "Spostamento X",
       "y": "Spostamento Y"

@@ -117,6 +117,8 @@ describe("PatternProperties", () => {
     await waitFor(() => expect(gap().disabled).toBe(true));
     fireEvent.click(screen.getByRole("radio", { name: "Squares" }));
     await waitFor(() => expect(gap().disabled).toBe(false));
+    fireEvent.click(screen.getByLabelText("Mirrored"));
+    await waitFor(() => expect(patternDrawing()?.pattern?.placement.mirrored).toBe(true));
 
     // `fullDocument` shows inches: 1 in cells, larger than the 10 mm default.
     const size = screen.getByLabelText(/^Cell size/);

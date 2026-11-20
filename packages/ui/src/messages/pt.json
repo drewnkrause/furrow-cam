@@ -1737,7 +1737,7 @@
   },
   "Pattern": {
     "heading": "Padrão",
-    "followsBoundary": "Move-se, roda e redimensiona-se com o desenho que preenche; selecione esse desenho para o mover. A rotação e o deslocamento movem as células no seu interior.",
+    "followsBoundary": "Move-se, roda e espelha-se com o desenho que preenche: selecione esse desenho para o mover. Redimensioná-lo muda o contorno; as células mantêm o tamanho. A rotação, o espelho e o deslocamento movem as células no seu interior.",
     "fill": "Padrão",
     "fillHint": "Preencher os caminhos fechados selecionados com um padrão",
     "filling": "A preencher…",
@@ -1770,6 +1770,7 @@
     "wavelength": "Comprimento de onda",
     "seed": "Semente",
     "rotation": "Rotação",
+    "mirrored": "Espelhado",
     "offset": {
       "x": "Deslocamento X",
       "y": "Deslocamento Y"
