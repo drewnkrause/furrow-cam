@@ -18,7 +18,7 @@ import {
 } from "../geometry/clipper";
 import { DEFAULT_CHORD_TOLERANCE, flattenPath } from "../geometry/flatten";
 import { cleanPath, polygonPath } from "../geometry/path";
-import { roundCoordinate } from "../geometry/round";
+import { textFrame } from "../geometry/scale";
 import { cellLattice, cellLines, type Lattice, lineStep, voronoiCells } from "./cells";
 
 /**
@@ -93,15 +93,17 @@ export function patternPaths(
 }
 
 /** The maps from a pattern's own frame to stock coordinates and back (ADR-0087). */
-function placementFrame({ position: [px, py], rotation, mirrored }: TextPlacement) {
+function placementFrame(placement: TextPlacement) {
+  const {
+    position: [px, py],
+    rotation,
+    mirrored,
+  } = placement;
   const angle = (rotation * Math.PI) / 180;
   const [c, s, m] = [Math.cos(angle), Math.sin(angle), mirrored ? -1 : 1];
   return {
-    // Rounded as imported coordinates are, as a text item's outlines (ADR-0059).
-    toStock: ([x, y]: Point): Point => [
-      roundCoordinate(px + c * m * x - s * y),
-      roundCoordinate(py + s * m * x + c * y),
-    ],
+    // Rounded as imported coordinates are, as a text item's outlines.
+    toStock: textFrame(placement),
     toLocal: ([x, y]: Point): Point => {
       const [dx, dy] = [x - px, y - py];
       return [m * (c * dx + s * dy), -s * dx + c * dy];

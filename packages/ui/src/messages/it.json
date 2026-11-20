@@ -822,7 +822,14 @@
       "terrainUnavailable": "Non è stato possibile scaricare le quote. Controlla la connessione e riprova.",
       "inlayClosedPaths": "Seleziona percorsi chiusi per farne un intarsio.",
       "inlayGap": "Lo spazio per la colla deve essere almeno 0 e minore della profondità della tasca.",
-      "inlayTooDeep": "Questo intarsio è troppo profondo per il cono della fresa a V o per il grezzo: la tasca deve restare nel cono e il fondo del tassello nel grezzo."
+      "inlayTooDeep": "Questo intarsio è troppo profondo per il cono della fresa a V o per il grezzo: la tasca deve restare nel cono e il fondo del tassello nel grezzo.",
+      "patternEmpty": "Nessuna cella sta nel contorno: riduci le celle o il rientro.",
+      "patternTooDense": "Le celle sono troppo piccole per questo contorno: ingrandiscile.",
+      "patternFailed": "Non è stato possibile generare il motivo.",
+      "patternNoSelection": "Seleziona percorsi chiusi di un disegno da riempire.",
+      "patternOneDrawing": "Seleziona percorsi di un solo disegno.",
+      "patternOfPattern": "Un motivo non può essere riempito con un altro.",
+      "patternNoClosedPath": "La selezione non ha percorsi chiusi da riempire."
     },
     "terrain": {
       "noArea": "Quest'area è troppo piccola. Disegnane una più grande.",
@@ -1727,5 +1734,47 @@
   },
   "NumberField": {
     "drag": "Trascina lateralmente per cambiare"
+  },
+  "Pattern": {
+    "heading": "Motivo",
+    "fill": "Motivo",
+    "fillHint": "Riempi i percorsi chiusi selezionati con un motivo",
+    "filling": "Riempimento…",
+    "defaultName": "Motivo",
+    "cell": "Cella",
+    "cells": {
+      "square": "Quadrati",
+      "brick": "Mattoni",
+      "hexagon": "Nido d'ape",
+      "triangle": "Triangoli",
+      "diamond": "Rombi",
+      "circleSquare": "Cerchi (griglia quadrata)",
+      "circleHex": "Cerchi (griglia esagonale)",
+      "lines": "Linee",
+      "crosshatch": "Tratteggio incrociato",
+      "wave": "Onde",
+      "zigzag": "Zigzag",
+      "herringbone": "Spina di pesce",
+      "basketWeave": "Intreccio a cesto",
+      "fishScale": "Squame",
+      "chevron": "Chevron",
+      "star": "Stelle",
+      "truchet": "Archi di Truchet",
+      "voronoi": "Celle di Voronoi"
+    },
+    "size": "Dimensione cella",
+    "gap": "Spazio",
+    "inset": "Rientro",
+    "amplitude": "Altezza onda",
+    "wavelength": "Lunghezza d'onda",
+    "seed": "Seme",
+    "rotation": "Rotazione",
+    "offset": {
+      "x": "Spostamento X",
+      "y": "Spostamento Y"
+    },
+    "tabsRemoved": "{count, plural, one {Rimossa # linguetta che non era più} other {Rimosse # linguette che non erano più}} sulle celle.",
+    "convert": "Converti in disegno",
+    "convertTitle": "Mantieni le celle come disegno, lavorato dalle stesse operazioni; non segue più il suo contorno"
   }
 }
