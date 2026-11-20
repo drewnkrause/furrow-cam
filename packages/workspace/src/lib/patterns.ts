@@ -36,10 +36,23 @@ export function boundaryPaths(geometry: readonly Shape[], boundary: readonly Sha
  * new pattern's origin goes, and what its offset counts from (ADR-0087).
  */
 export function boundaryCorner(geometry: readonly Shape[], boundary: readonly ShapePaths[]): Point {
-  const boxes = boundaryPaths(geometry, boundary).map(pathBounds);
-  if (boxes.length === 0) return [0, 0];
-  return [Math.min(...boxes.map(({ min }) => min[0])), Math.min(...boxes.map(({ min }) => min[1]))];
+  // A loop, not a spread: a drawing may hold more paths than a call takes arguments.
+  let corner: Point | null = null;
+  for (const path of boundaryPaths(geometry, boundary)) {
+    const { min } = pathBounds(path);
+    corner = corner ? [Math.min(corner[0], min[0]), Math.min(corner[1], min[1])] : min;
+  }
+  return corner ?? [0, 0];
 }
+
+/**
+ * The settings of patterns whose cells were only mapped with their boundary or
+ * their own transform during a gesture (dragging, scrubbing), not generated
+ * again: the commit generates them once (`settlePatterns`), so a gesture
+ * doesn't generate on every step. Kept by identity, so an undo restores
+ * settings that aren't in it.
+ */
+export const stalePatterns = new WeakSet<PatternSettings>();
 
 export type Generated = { ok: true; paths: Path[] } | { ok: false; error: Message };
 
