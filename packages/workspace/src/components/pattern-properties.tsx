@@ -120,9 +120,13 @@ export function PatternProperties({
       setError(result.ok ? null : result.error);
       if (!result.ok) return;
       setRemovedTabs(result.removedTabs);
-      // The new cells are numbered afresh: select all of them, as filling did.
+      // The new cells are numbered afresh: select all of them, as filling did,
+      // unless the selection moved elsewhere while they were generated.
       const [shape] = drawingShapes(store.getState().document.geometry, drawingId);
-      if (shape) workspace.getState().selectPaths(shapePaths(shape));
+      const selected = workspace.getState().selectedPaths;
+      if (shape && selected.length > 0 && selected.every((ref) => ref.shapeId === shape.id)) {
+        workspace.getState().selectPaths(shapePaths(shape));
+      }
     } finally {
       setGenerating((count) => count - 1);
     }

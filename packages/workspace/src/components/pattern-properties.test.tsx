@@ -158,6 +158,13 @@ describe("PatternProperties", () => {
     // Its new cells, all selected, so an operation added next machines every one.
     const [shape] = drawingShapes(current().geometry, patternDrawing()?.id as string);
     expect(stores.workspace.getState().selectedPaths).toHaveLength(shape?.paths.length ?? -1);
+
+    // Cleared while the next edit is generated: it stays cleared.
+    fireEvent.click(container.querySelector('[data-demo="pattern-cell-wave"]') as HTMLElement);
+    act(() => stores.workspace.getState().selectPaths([]));
+    await waitFor(() => expect(patternDrawing()?.pattern?.cell).toBe("wave"));
+    await waitFor(() => expect(generating()).toBeNull());
+    expect(stores.workspace.getState().selectedPaths).toHaveLength(0);
   });
 
   it("follows its boundary when resized, and stays when the boundary is hidden", async () => {
