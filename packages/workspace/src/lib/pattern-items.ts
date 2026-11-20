@@ -7,6 +7,7 @@ import {
   patternBoundary,
   setPatternItem,
 } from "../stores/pattern-actions";
+import { createEditQueue, type EditResult } from "./edit-queue";
 import {
   boundaryCorner,
   boundaryPaths,
@@ -16,6 +17,7 @@ import {
   type PatternWorkerRequest,
   type PatternWorkerResponse,
 } from "./patterns";
+import { workerClient } from "./worker-client";
 
 /**
  * Fills the closed paths `targets` select with a pattern of the default
@@ -46,12 +48,42 @@ export async function addPattern(
   }
 }
 
-export type PatternEdits = Partial<Omit<PatternSettings, "boundary">>;
-type EditResult = { ok: true; removedTabs: number } | { ok: false; error: Message };
+/**
+ * Changes to a pattern's settings: its placement's rotation and position one
+ * coordinate at a time, so edits queued together each keep theirs.
+ */
+export type PatternEdits = Partial<Omit<PatternSettings, "boundary" | "placement">> & {
+  rotation?: number;
+  x?: number;
+  y?: number;
+};
 
-/** A pattern's edits waiting to be generated, merged so the latest of each wins, and who waits on them. */
-type Queue = { edits: PatternEdits | null; waiting: ((result: EditResult) => void)[] };
-const queues = new Map<string, Queue>();
+/** `pattern` with `edits` applied. */
+function edited(pattern: PatternSettings, { rotation, x, y, ...edits }: PatternEdits) {
+  const { placement } = pattern;
+  return {
+    ...pattern,
+    ...edits,
+    placement: {
+      ...placement,
+      rotation: rotation ?? placement.rotation,
+      position: [x ?? placement.position[0], y ?? placement.position[1]],
+    },
+  } satisfies PatternSettings;
+}
+const patternEdits = createEditQueue<PatternSettings, PatternEdits, undefined>({
+  read: (store, id) => store.getState().document.drawings.find((d) => d.id === id)?.pattern,
+  apply: edited,
+  derive: (store, settings) =>
+    generatePatternOffThread(store.getState().document.geometry, settings),
+  // Its boundary changed, or it moved with it: its settings are new.
+  moved: (store, id, before) =>
+    store.getState().document.drawings.find((d) => d.id === id)?.pattern !== before,
+  commit: (store, id, settings, paths) => ({
+    ok: true,
+    removedTabs: setPatternItem(store, id, settings, paths),
+  }),
+});
 
 /**
  * Changes pattern `id`'s settings by `edits` and generates its cells again off
@@ -61,23 +93,12 @@ const queues = new Map<string, Queue>();
  * its boundary changed meanwhile, it is generated again where it is.
  */
 export function editPattern(store: DocumentStore, id: string, edits: PatternEdits) {
-  return new Promise<EditResult>((resolve) => {
-    const queue = queues.get(id);
-    if (queue) {
-      queue.edits = { ...queue.edits, ...edits };
-      queue.waiting.push(resolve);
-      return;
-    }
-    const started: Queue = { edits, waiting: [resolve] };
-    queues.set(id, started);
-    void run(store, id, started);
-  });
+  return patternEdits.edit(store, id, edits);
 }
 
 /** Resolves once pattern `id` has no edits waiting or being generated, with how the last went. */
 export function patternSettled(id: string): Promise<EditResult | null> {
-  const queue = queues.get(id);
-  return queue ? new Promise((resolve) => queue.waiting.push(resolve)) : Promise.resolve(null);
+  return patternEdits.settled(id);
 }
 
 /**
@@ -94,80 +115,21 @@ export async function convertPattern(store: DocumentStore, id: string): Promise<
   return { ok: true };
 }
 
-async function run(store: DocumentStore, id: string, queue: Queue) {
-  let result: EditResult = { ok: true, removedTabs: 0 };
-  while (queue.edits) {
-    const edits = queue.edits;
-    queue.edits = null;
-    const { document } = store.getState();
-    const pattern = document.drawings.find((drawing) => drawing.id === id)?.pattern;
-    if (!pattern) break;
-    const settings = { ...pattern, ...edits };
-    const generated = await generatePatternOffThread(document.geometry, settings);
-    // Read again: `editPattern` may have queued newer edits meanwhile.
-    const newer = queue.edits as PatternEdits | null;
-    if (newer) {
-      queue.edits = { ...edits, ...newer };
-      continue;
-    }
-    if (!generated.ok) {
-      result = generated;
-      break;
-    }
-    if (store.getState().document.geometry !== document.geometry) {
-      queue.edits = edits;
-      continue;
-    }
-    result = { ok: true, removedTabs: setPatternItem(store, id, settings, generated.paths) };
-  }
-  queues.delete(id);
-  for (const resolve of queue.waiting) resolve(result);
-}
-
 // Here, not in `patterns.ts`: the worker imports that, and a worker bundling its own spawn never builds.
-let worker: Worker | null = null;
-const waiting = new Map<number, (response: Generated) => void>();
-let nextId = 0;
+const worker = workerClient<PatternWorkerRequest, PatternWorkerResponse>(
+  () => new Worker(new URL("../workers/pattern.worker.ts", import.meta.url), { type: "module" }),
+  (id) => ({ id, ok: false, error: PATTERN_FAILED }),
+);
 
 /**
  * `generatePattern` in a Web Worker (ADR-0004) that stays for the next edit,
  * so a slow pattern never freezes the workspace (PRD-0016 P7).
  */
-export function generatePatternOffThread(
+export async function generatePatternOffThread(
   geometry: readonly Shape[],
   settings: PatternSettings,
 ): Promise<Generated> {
-  const running = worker ?? start();
-  const id = nextId++;
-  return new Promise((resolve) => {
-    waiting.set(id, resolve);
-    const request: PatternWorkerRequest = {
-      id,
-      boundary: boundaryPaths(geometry, settings.boundary),
-      settings,
-    };
-    running.postMessage(request);
-  });
-}
-
-function start(): Worker {
-  const started = new Worker(new URL("../workers/pattern.worker.ts", import.meta.url), {
-    type: "module",
-  });
-  started.onmessage = ({ data }: MessageEvent<PatternWorkerResponse>) => {
-    const answer = waiting.get(data.id);
-    waiting.delete(data.id);
-    const { id: _, ...generated } = data;
-    answer?.(generated as Generated);
-  };
-  // A worker that fails to load fails every request; the next one starts another.
-  started.onerror = (event) => {
-    event.preventDefault();
-    started.terminate();
-    worker = null;
-    for (const answer of waiting.values()) answer({ ok: false, error: PATTERN_FAILED });
-    waiting.clear();
-  };
-  worker = started;
-  return started;
+  const boundary = boundaryPaths(geometry, settings.boundary);
+  const { id: _, ...generated } = await worker.post((id) => ({ id, boundary, settings }));
+  return generated as Generated;
 }
