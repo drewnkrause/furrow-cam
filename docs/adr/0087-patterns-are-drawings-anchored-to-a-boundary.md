@@ -1,6 +1,6 @@
 # ADR-0087: A pattern is a drawing that keeps its settings and its boundary, and stores its cells as one shape
 
-- **Status:** Accepted
+- **Status:** Accepted; superseded in part by [ADR-0088](0088-pattern-panel-offers-only-its-settings.md) (a pattern isn't transformed on its own)
 - **Date:** 2026-11-19
 - **Deciders:** Federico Vezzoli
 - **Related:** PRD-0016 (P1–P5, P8, P9), ADR-0004, ADR-0018, ADR-0055, ADR-0059, ADR-0080; #621–#624

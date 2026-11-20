@@ -54,12 +54,13 @@ export async function addPattern(
  */
 export type PatternEdits = Partial<Omit<PatternSettings, "boundary" | "placement">> & {
   rotation?: number;
+  mirrored?: boolean;
   x?: number;
   y?: number;
 };
 
 /** `pattern` with `edits` applied. */
-function edited(pattern: PatternSettings, { rotation, x, y, ...edits }: PatternEdits) {
+function edited(pattern: PatternSettings, { rotation, mirrored, x, y, ...edits }: PatternEdits) {
   const { placement } = pattern;
   return {
     ...pattern,
@@ -67,6 +68,7 @@ function edited(pattern: PatternSettings, { rotation, x, y, ...edits }: PatternE
     placement: {
       ...placement,
       rotation: rotation ?? placement.rotation,
+      mirrored: mirrored ?? placement.mirrored,
       position: [x ?? placement.position[0], y ?? placement.position[1]],
     },
   } satisfies PatternSettings;

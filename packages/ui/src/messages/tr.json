@@ -1737,6 +1737,7 @@
   },
   "Pattern": {
     "heading": "Desen",
+    "followsBoundary": "Doldurduğu çizimle birlikte taşınır, döner ve aynalanır: taşımak için o çizimi seçin. O çizimi yeniden boyutlandırmak dış hattı değiştirir; hücreler boyutlarını korur. Döndürme, aynalama ve kaydırma içindeki hücreleri taşır.",
     "fill": "Desen",
     "fillHint": "Seçili kapalı yolları bir desenle doldur",
     "filling": "Dolduruluyor…",
@@ -1769,6 +1770,7 @@
     "wavelength": "Dalga boyu",
     "seed": "Tohum",
     "rotation": "Döndürme",
+    "mirrored": "Aynalanmış",
     "offset": {
       "x": "Kaydırma X",
       "y": "Kaydırma Y"
