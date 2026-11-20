@@ -135,6 +135,31 @@ describe("PatternProperties", () => {
     );
   });
 
+  it("marks each cell and an edit being generated, and selects the new cells", async () => {
+    const { container } = render(
+      <>
+        <FillPatternButton />
+        <PatternPanel />
+      </>,
+    );
+    await fill();
+    const voronoi = await waitFor(() => {
+      const cell = container.querySelector('[data-demo="pattern-cell-voronoi"]');
+      expect(cell).not.toBeNull();
+      return cell as HTMLElement;
+    });
+    expect(voronoi.querySelector("input")?.getAttribute("aria-label")).toBe("Voronoi cells");
+    const generating = () => container.querySelector('[data-demo="pattern-generating"]');
+    expect(generating()).toBeNull();
+    fireEvent.click(voronoi);
+    expect(generating()).not.toBeNull();
+    await waitFor(() => expect(patternDrawing()?.pattern?.cell).toBe("voronoi"));
+    await waitFor(() => expect(generating()).toBeNull());
+    // Its new cells, all selected, so an operation added next machines every one.
+    const [shape] = drawingShapes(current().geometry, patternDrawing()?.id as string);
+    expect(stores.workspace.getState().selectedPaths).toHaveLength(shape?.paths.length ?? -1);
+  });
+
   it("follows its boundary when resized, and stays when the boundary is hidden", async () => {
     render(<FillPatternButton />);
     const id = await fill();
